@@ -4,16 +4,52 @@ body {
   margin: 0;
   padding: 0;
   font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-  background-color: #f0f2f5;
+  background-color: #f2f3f6; /* Neutral Grey */
 }
 
+.gallery-page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+/* Header / Introduction Section */
+.gallery-header {
+  text-align: center;
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  background-color: #071d49; /* Primary Blue */
+  color: #ffffff;
+  border-radius: 8px;
+}
+
+.gallery-logo {
+  max-width: 200px; /* or adjust as needed */
+  height: auto;
+  margin-bottom: 1rem;
+  padding: 0.5rem; /* add some padding */
+  background-color: #ffffff; /* white background for contrast */
+  border: 2px solid #ffd100; /* accent yellow border */
+  border-radius: 4px; /* optional rounded corners */
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.2)); /* subtle shadow */
+}
+
+.gallery-header h1 {
+  margin: 0.5rem 0;
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+.gallery-header p {
+  font-size: 1.1rem;
+  margin-top: 0.5rem;
+}
+
+/* Gallery Grid */
 .gallery {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 1.5rem;
-  padding: 2rem;
-  max-width: 1200px;
-  margin: 0 auto;
 }
 
 .gallery-item {
@@ -51,22 +87,25 @@ body {
 
 .gallery-item h3 {
   margin: 0.8rem 0 1rem;
-  color: #333;
+  color: #071d49; /* Primary Blue for titles */
   text-align: center;
 }
 
+/* Play Button */
 .play-button {
   text-decoration: none;
   color: #ffffff;
-  background: linear-gradient(135deg, #6a11cb, #2575fc);
+  background: #071d49; /* Primary Blue base */
   padding: 0.6rem 1.2rem;
   border-radius: 6px;
   text-align: center;
   font-weight: 600;
-  transition: background 0.3s ease;
+  transition: background 0.3s ease, transform 0.2s ease;
   align-self: center;
 }
 
 .play-button:hover {
-  background: linear-gradient(135deg, #5a0fb5, #1f64d1);
+  background: #ffd100; /* Accent Yellow on hover */
+  transform: translateY(-2px);
+  color: #071d49;
 }
