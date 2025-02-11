@@ -70,5 +70,17 @@
       "frameworkUrl": "/builds/TowerDefense/Build/WebGL Builds.framework.js",
       "codeUrl": "/builds/TowerDefense/Build/WebGL Builds.wasm"
     }
+  },
+  {
+    "id": "LetterRun",
+    "title": "Letter Run",
+    "author": "Jamie Myland",
+    "thumbnail": "/builds/LetterRun/thumbnail.png",
+    "build": {
+      "loaderUrl": "/builds/LetterRun/Build/LetterRun.loader.js",
+      "dataUrl": "/builds/LetterRun/Build/LetterRun.data",
+      "frameworkUrl": "/builds/LetterRun/Build/LetterRun.framework.js",
+      "codeUrl": "/builds/LetterRun/Build/LetterRun.wasm"
+    }
   }
 ]

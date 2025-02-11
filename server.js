@@ -49,6 +49,27 @@ const decompressFilesInFolder = (folderPath) => {
     });
 };
 
+function findBuildFolder(dir) {
+    const items = fs.readdirSync(dir);
+    // Check if any of the items is named "Build" and is a directory
+    if (items.includes("Build")) {
+        const potential = path.join(dir, "Build");
+        if (fs.statSync(potential).isDirectory()) {
+            return potential;
+        }
+    }
+    // Recursively search in subdirectories
+    for (const item of items) {
+        const fullPath = path.join(dir, item);
+        if (fs.statSync(fullPath).isDirectory()) {
+            const found = findBuildFolder(fullPath);
+            if (found) {
+                return found;
+            }
+        }
+    }
+    return null;
+}
 
 const app = express();
 
@@ -124,11 +145,30 @@ app.post("/upload", upload.fields([
     fs.createReadStream(zipFile.path)
         .pipe(unzipper.Extract({ path: extractDir }))
         .on("close", () => {
-            // After extraction, decompress any compressed files in the Build folder.
-            const buildFolder = path.join(extractDir, "Build");
-            decompressFilesInFolder(buildFolder)
+            // Find the Build folder recursively in the extracted directory
+            let foundBuildFolder = findBuildFolder(extractDir);
+            if (!foundBuildFolder) {
+                return res.status(500).json({ error: "Build folder not found in the uploaded ZIP." });
+            }
+
+            const targetBuildFolder = path.join(extractDir, "Build");
+
+            // If the found Build folder isn't already at the target, move it there.
+            if (foundBuildFolder !== targetBuildFolder) {
+                try {
+                    fs.renameSync(foundBuildFolder, targetBuildFolder);
+                    console.log("Moved Build folder to target location:", targetBuildFolder);
+                } catch (err) {
+                    console.error("Error moving Build folder:", err);
+                    return res.status(500).json({ error: "Error relocating Build folder." });
+                }
+            }
+
+            // Now targetBuildFolder is the Build folder to use.
+            // Decompress any compressed files in the Build folder.
+            decompressFilesInFolder(targetBuildFolder)
                 .then(() => {
-                    // Now, all compressed files should be replaced with uncompressed versions.
+                    // All compressed files have been decompressed.
                     const newGame = {
                         id: projectId,
                         title,
@@ -148,7 +188,7 @@ app.post("/upload", upload.fields([
                         if (err) {
                             return res.status(500).json({ error: "Error updating games.json" });
                         }
-                        // Remove the uploaded ZIP file
+                        // Remove the uploaded ZIP file after extraction.
                         fs.unlink(zipFile.path, () => { });
                         res.json({ success: true, game: newGame });
                     });
