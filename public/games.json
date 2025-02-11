@@ -1,0 +1,36 @@
+[
+  {
+    "id": "TypingTower",
+    "title": "Typing Tower",
+    "thumbnail": "/builds/TypingTower/thumbnail.png",
+    "build": {
+      "loaderUrl": "/builds/TypingTower/Build/TypingTower.loader.js",
+      "dataUrl": "/builds/TypingTower/Build/TypingTower.data",
+      "frameworkUrl": "/builds/TypingTower/Build/TypingTower.framework.js",
+      "codeUrl": "/builds/TypingTower/Build/TypingTower.wasm"
+    }
+  },
+  {
+    "id": "WordAchitect",
+    "title": "Word Achitect",
+    "thumbnail": "/builds/WordAchitect/thumbnail.png",
+    "build": {
+      "loaderUrl": "/builds/WordAchitect/Build/WordAchitect.loader.js",
+      "dataUrl": "/builds/WordAchitect/Build/WordAchitect.data",
+      "frameworkUrl": "/builds/WordAchitect/Build/WordAchitect.framework.js",
+      "codeUrl": "/builds/WordAchitect/Build/WordAchitect.wasm"
+    }
+  },
+  {
+    "id": "WebGL Builds",
+    "title": "Fantasy Tower Defense",
+    "thumbnail": "/builds/TowerDefense/thumbnail.png",
+    "build": {
+      "loaderUrl": "/builds/TowerDefense/Build/WebGL Builds.loader.js",
+      "dataUrl": "/builds/TowerDefense/Build/WebGL Builds.data",
+      "frameworkUrl": "/builds/TowerDefense/Build/WebGL Builds.framework.js",
+      "codeUrl": "/builds/TowerDefense/Build/WebGL Builds.wasm"
+    }
+  }
+  
+]
