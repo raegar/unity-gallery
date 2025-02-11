@@ -1,3 +1,4 @@
+// server.js
 const express = require("express");
 const multer = require("multer");
 const unzipper = require("unzipper");
@@ -6,62 +7,101 @@ const path = require("path");
 
 const app = express();
 
-// Use multer to temporarily store uploaded ZIP files
+// Configure multer to handle multiple fields
 const upload = multer({ dest: "uploads/" });
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// POST endpoint to handle file upload
-app.post("/upload", upload.single("zipfile"), (req, res) => {
-    // Expect metadata fields from the form (title, author, projectId)
-    const { title, author, projectId } = req.body;
-    const zipPath = req.file.path;
+app.post("/upload", upload.fields([
+    { name: "zipfile", maxCount: 1 },
+    { name: "thumbnail", maxCount: 1 }
+]), (req, res) => {
+    const { title, author, projectId, overwrite } = req.body;
+    // Retrieve files from req.files
+    const zipFile = req.files["zipfile"] ? req.files["zipfile"][0] : null;
+    const thumbnailFile = req.files["thumbnail"] ? req.files["thumbnail"][0] : null;
 
-    // Determine extraction directory (e.g. public/builds/projectId)
+    if (!zipFile || !title || !author || !projectId) {
+        return res.status(400).json({ error: "Missing required fields or files." });
+    }
+
     const extractDir = path.join(__dirname, "public", "builds", projectId);
+    const gamesJsonPath = path.join(__dirname, "public", "games.json");
 
-    // Create the extraction directory if it doesn’t exist
+    // Read current games.json (or use an empty array if not available)
+    let games = [];
+    try {
+        games = JSON.parse(fs.readFileSync(gamesJsonPath, "utf8"));
+    } catch (err) {
+        games = [];
+    }
+
+    const folderExists = fs.existsSync(extractDir);
+    const gameIndex = games.findIndex(game => game.id === projectId);
+
+    if ((folderExists || gameIndex !== -1) && overwrite !== "true") {
+        return res.status(400).json({
+            error: "A game with that project ID already exists. Set overwrite=true to replace it."
+        });
+    }
+
+    // If overwrite is requested, remove the existing folder and JSON entry if they exist.
+    if (folderExists && overwrite === "true") {
+        try {
+            fs.rmSync(extractDir, { recursive: true, force: true });
+        } catch (err) {
+            console.error("Error deleting existing folder:", err);
+            return res.status(500).json({ error: "Error deleting existing project folder." });
+        }
+    }
+    if (gameIndex !== -1 && overwrite === "true") {
+        games.splice(gameIndex, 1);
+    }
+
+    // Create the extraction directory
     fs.mkdirSync(extractDir, { recursive: true });
 
-    // Extract the ZIP into the target folder
-    fs.createReadStream(zipPath)
+    // Process the thumbnail if provided
+    if (thumbnailFile) {
+        // Define destination path for thumbnail (e.g., "thumbnail.png")
+        const thumbDest = path.join(extractDir, "thumbnail.png");
+        // Move the file from the temporary folder to the destination.
+        try {
+            fs.renameSync(thumbnailFile.path, thumbDest);
+        } catch (err) {
+            console.error("Error moving thumbnail file:", err);
+            return res.status(500).json({ error: "Error processing thumbnail." });
+        }
+    }
+
+    // Extract the ZIP file into the designated folder
+    fs.createReadStream(zipFile.path)
         .pipe(unzipper.Extract({ path: extractDir }))
         .on("close", () => {
-            // Update games.json after extraction
-            const gamesJsonPath = path.join(__dirname, "public", "games.json");
-            fs.readFile(gamesJsonPath, "utf8", (err, data) => {
+            // Construct a new game entry using the provided metadata.
+            const newGame = {
+                id: projectId,
+                title,
+                author,
+                thumbnail: `/builds/${projectId}/thumbnail.png`, // Thumbnail URL
+                build: {
+                    loaderUrl: `/builds/${projectId}/Build/${projectId}.loader.js`,
+                    dataUrl: `/builds/${projectId}/Build/${projectId}.data`,
+                    frameworkUrl: `/builds/${projectId}/Build/${projectId}.framework.js`,
+                    codeUrl: `/builds/${projectId}/Build/${projectId}.wasm`
+                }
+            };
+
+            games.push(newGame);
+
+            fs.writeFile(gamesJsonPath, JSON.stringify(games, null, 2), (err) => {
                 if (err) {
-                    return res.status(500).json({ error: "Error reading games.json" });
+                    return res.status(500).json({ error: "Error updating games.json" });
                 }
-                let games = [];
-                try {
-                    games = JSON.parse(data);
-                } catch (e) {
-                    games = [];
-                }
-                // Create a new entry using the provided metadata and expected file structure.
-                const newGame = {
-                    id: projectId,
-                    title,
-                    author,
-                    thumbnail: `/builds/${projectId}/thumbnail.png`, // You can manually create this thumbnail later
-                    build: {
-                        loaderUrl: `/builds/${projectId}/Build/${projectId}.loader.js`,
-                        dataUrl: `/builds/${projectId}/Build/${projectId}.data`,
-                        frameworkUrl: `/builds/${projectId}/Build/${projectId}.framework.js`,
-                        codeUrl: `/builds/${projectId}/Build/${projectId}.wasm`
-                    }
-                };
-                games.push(newGame);
-                fs.writeFile(gamesJsonPath, JSON.stringify(games, null, 2), (err) => {
-                    if (err) {
-                        return res.status(500).json({ error: "Error updating games.json" });
-                    }
-                    // Remove the temporary ZIP file
-                    fs.unlink(zipPath, () => { });
-                    res.json({ success: true, game: newGame });
-                });
+                // Clean up the uploaded ZIP file
+                fs.unlink(zipFile.path, () => { });
+                res.json({ success: true, game: newGame });
             });
         })
         .on("error", (err) => {

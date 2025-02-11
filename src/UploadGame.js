@@ -5,27 +5,35 @@ function UploadGame() {
     const [title, setTitle] = useState("");
     const [author, setAuthor] = useState("");
     const [projectId, setProjectId] = useState("");
-    const [file, setFile] = useState(null);
+    const [zipFile, setZipFile] = useState(null);
+    const [thumbnail, setThumbnail] = useState(null); // new state for thumbnail
+    const [overwrite, setOverwrite] = useState(false);
     const [uploadStatus, setUploadStatus] = useState("");
 
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if (!file || !title || !author || !projectId) {
-            setUploadStatus("Please fill in all fields and select a file.");
+        if (!zipFile || !title || !author || !projectId) {
+            setUploadStatus("Please fill in all required fields and select a ZIP file.");
             return;
         }
         setUploadStatus("Uploading...");
 
         const formData = new FormData();
-        formData.append("zipfile", file);
+        formData.append("zipfile", zipFile);
         formData.append("title", title);
         formData.append("author", author);
         formData.append("projectId", projectId);
+        formData.append("overwrite", overwrite ? "true" : "false");
+
+        // If a thumbnail was selected, append it.
+        if (thumbnail) {
+            formData.append("thumbnail", thumbnail);
+        }
 
         try {
             const response = await fetch("/upload", {
                 method: "POST",
-                body: formData
+                body: formData,
             });
             const result = await response.json();
             if (result.success) {
@@ -64,7 +72,19 @@ function UploadGame() {
                 <div style={{ marginBottom: "1rem" }}>
                     <label>
                         ZIP File:
-                        <input type="file" accept=".zip" onChange={(e) => setFile(e.target.files[0])} required />
+                        <input type="file" accept=".zip" onChange={(e) => setZipFile(e.target.files[0])} required />
+                    </label>
+                </div>
+                <div style={{ marginBottom: "1rem" }}>
+                    <label>
+                        Thumbnail (640x480 recommended):
+                        <input type="file" accept="image/*" onChange={(e) => setThumbnail(e.target.files[0])} />
+                    </label>
+                </div>
+                <div style={{ marginBottom: "1rem" }}>
+                    <label>
+                        Overwrite if exists:
+                        <input type="checkbox" checked={overwrite} onChange={(e) => setOverwrite(e.target.checked)} />
                     </label>
                 </div>
                 <button type="submit" style={{ padding: "0.5rem 1rem", backgroundColor: "#071d49", color: "#fff", border: "none", borderRadius: "4px" }}>
