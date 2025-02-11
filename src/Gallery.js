@@ -1,30 +1,31 @@
 // src/Gallery.js
-import React, { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
+import "./Gallery.css"; // Import the CSS file below
 
 function Gallery() {
   const [games, setGames] = useState([]);
 
   useEffect(() => {
-    // Fetch the local JSON file listing the games.
-    fetch('/games.json')
+    fetch("/games.json")
       .then((res) => res.json())
       .then((data) => setGames(data))
-      .catch((error) => console.error('Error fetching games:', error));
+      .catch((error) => console.error("Error fetching games:", error));
   }, []);
 
   return (
-    <div style={{ padding: '20px' }}>
-      <h1>Unity Games Gallery</h1>
-      <div style={{ display: 'flex', gap: '20px' }}>
-        {games.map((game) => (
-          <div key={game.id} style={{ border: '1px solid #ccc', padding: '10px' }}>
-            <img src={game.thumbnail} alt={game.title} style={{ width: '200px', height: 'auto' }} />
-            <h3>{game.title}</h3>
-            <Link to={`/play/${game.id}`}>Play Game</Link>
+    <div className="gallery">
+      {games.map((game) => (
+        <div key={game.id} className="gallery-item">
+          <div className="gallery-image-wrapper">
+            <img src={game.thumbnail} alt={game.title} />
           </div>
-        ))}
-      </div>
+          <h3>{game.title}</h3>
+          <Link className="play-button" to={`/play/${game.id}`}>
+            Play Game
+          </Link>
+        </div>
+      ))}
     </div>
   );
 }
