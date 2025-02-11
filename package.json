@@ -4,19 +4,23 @@
   "private": true,
   "dependencies": {
     "cra-template": "1.2.0",
+    "express": "^4.21.2",
+    "multer": "^1.4.5-lts.1",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-router-dom": "^6.3.0",
     "react-scripts": "^5.0.1",
     "react-unity-webgl": "^9.7.0",
+    "unzipper": "^0.12.3",
     "web-vitals": "^4.2.4"
   },
   "scripts": {
-    "start": "set NODE_OPTIONS=--openssl-legacy-provider && react-scripts start",
+    "start": "concurrently \"node server.js\" \"cross-env DANGEROUSLY_DISABLE_HOST_CHECK=true NODE_OPTIONS=--openssl-legacy-provider react-scripts start\"",
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },
+  "proxy": "http://localhost:3001",
   "eslintConfig": {
     "extends": [
       "react-app",
@@ -37,6 +41,8 @@
   },
   "devDependencies": {
     "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
-    "@babel/plugin-transform-private-property-in-object": "^7.25.9"
+    "@babel/plugin-transform-private-property-in-object": "^7.25.9",
+    "concurrently": "^7.6.0",
+    "cross-env": "^7.0.3"
   }
 }

@@ -20,7 +20,7 @@ function Gallery() {
         <h1>Student Game Showcase</h1>
         <p>
           Welcome to our gallery of student games. Explore innovative projects
-          and cutting‐edge interactive experiences built by our talented
+          and exciting interactive experiences built by our talented
           students.
         </p>
       </header>
@@ -32,6 +32,8 @@ function Gallery() {
               <img src={game.thumbnail} alt={game.title} />
             </div>
             <h3>{game.title}</h3>
+            {/* Display the author below the game title */}
+            <p className="game-author">by {game.author}</p>
             <Link className="play-button" to={`/play/${game.id}`}>
               Play Game
             </Link>

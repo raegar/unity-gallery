@@ -2,6 +2,7 @@
   {
     "id": "TypingTower",
     "title": "Typing Tower",
+    "author": "Ignacy Dziakola",
     "thumbnail": "/builds/TypingTower/thumbnail.png",
     "build": {
       "loaderUrl": "/builds/TypingTower/Build/TypingTower.loader.js",
@@ -13,6 +14,7 @@
   {
     "id": "WordArchitect",
     "title": "Word Architect",
+    "author": "Ignacy Dziakola",
     "thumbnail": "/builds/WordArchitect/thumbnail.png",
     "build": {
       "loaderUrl": "/builds/WordArchitect/Build/WordArchitect.loader.js",
@@ -24,6 +26,7 @@
   {
     "id": "WordontheStreet",
     "title": "Word on the Street",
+    "author": "Paul Mould",
     "thumbnail": "/builds/WordontheStreet/thumbnail.png",
     "build": {
       "loaderUrl": "/builds/WordontheStreet/Build/WordontheStreet.loader.js",
@@ -33,8 +36,21 @@
     }
   },
   {
+    "id": "WordFight",
+    "title": "Word Fight",
+    "author": "Jess Woodward",
+    "thumbnail": "/builds/WordFight/thumbnail.png",
+    "build": {
+      "loaderUrl": "/builds/WordFight/Build/WordFight.loader.js",
+      "dataUrl": "/builds/WordFight/Build/WordFight.data",
+      "frameworkUrl": "/builds/WordFight/Build/WordFight.framework.js",
+      "codeUrl": "/builds/WordFight/Build/WordFight.wasm"
+    }
+  },
+  {
     "id": "WordWorm",
     "title": "WormWord",
+    "author": "Don MacSween",
     "thumbnail": "/builds/WordWorm/thumbnail.png",
     "build": {
       "loaderUrl": "/builds/WordWorm/Build/WordWorm.loader.js",
@@ -44,14 +60,27 @@
     }
   },
   {
-    "id": "WebGL Builds",
+    "id": "TowerDefense",
     "title": "Fantasy Tower Defense",
+    "author": "Dan Burciu",
     "thumbnail": "/builds/TowerDefense/thumbnail.png",
     "build": {
       "loaderUrl": "/builds/TowerDefense/Build/WebGL Builds.loader.js",
       "dataUrl": "/builds/TowerDefense/Build/WebGL Builds.data",
       "frameworkUrl": "/builds/TowerDefense/Build/WebGL Builds.framework.js",
       "codeUrl": "/builds/TowerDefense/Build/WebGL Builds.wasm"
+    }
+  },
+  {
+    "id": "LetterRun",
+    "title": "Letter Run",
+    "author": "Jamie Myland",
+    "thumbnail": "/builds/LetterRun/thumbnail.png",
+    "build": {
+      "loaderUrl": "/builds/LetterRun/Build/LetterRun.loader.js",
+      "dataUrl": "/builds/LetterRun/Build/LetterRun.data",
+      "frameworkUrl": "/builds/LetterRun/Build/LetterRun.framework.js",
+      "codeUrl": "/builds/LetterRun/Build/LetterRun.wasm"
     }
   }
 ]

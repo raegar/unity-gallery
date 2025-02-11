@@ -25,7 +25,6 @@ body {
 
 .gallery-logo {
   max-width: 200px;
-  /* or adjust as needed */
   height: auto;
   margin-bottom: 1rem;
   padding: 0.5rem;
@@ -104,6 +103,16 @@ body {
   color: #071d49;
   /* Primary Blue for titles */
   text-align: center;
+}
+
+/* Style for the author text */
+.game-author {
+  font-size: 0.9rem;
+  color: #071d49;
+  text-align: center;
+  margin-top: -0.5rem;
+  margin-bottom: 1rem;
+  font-style: italic;
 }
 
 /* Play Button */
