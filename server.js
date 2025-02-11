@@ -4,6 +4,51 @@ const multer = require("multer");
 const unzipper = require("unzipper");
 const fs = require("fs");
 const path = require("path");
+const zlib = require("zlib");
+
+const decompressFile = (filePath, extension) => {
+    return new Promise((resolve, reject) => {
+        // Remove the extension (.gz or .br) from the filename to get the target name.
+        const newFilePath = filePath.replace(extension, "");
+        const readStream = fs.createReadStream(filePath);
+        const writeStream = fs.createWriteStream(newFilePath);
+        // Choose the correct decompression stream based on the extension.
+        const decompress = extension === ".gz"
+            ? zlib.createGunzip()
+            : zlib.createBrotliDecompress();
+
+        readStream
+            .pipe(decompress)
+            .pipe(writeStream)
+            .on("finish", () => {
+                // Optionally remove the compressed file.
+                fs.unlinkSync(filePath);
+                resolve(newFilePath);
+            })
+            .on("error", reject);
+    });
+};
+
+const decompressFilesInFolder = (folderPath) => {
+    return new Promise((resolve, reject) => {
+        fs.readdir(folderPath, (err, files) => {
+            if (err) return reject(err);
+            // Create an array of promises for each decompression operation.
+            const decompressPromises = files.map((file) => {
+                const filePath = path.join(folderPath, file);
+                if (file.endsWith(".gz")) {
+                    return decompressFile(filePath, ".gz");
+                } else if (file.endsWith(".br")) {
+                    return decompressFile(filePath, ".br");
+                } else {
+                    return Promise.resolve();
+                }
+            });
+            Promise.all(decompressPromises).then(resolve).catch(reject);
+        });
+    });
+};
+
 
 const app = express();
 
@@ -79,30 +124,39 @@ app.post("/upload", upload.fields([
     fs.createReadStream(zipFile.path)
         .pipe(unzipper.Extract({ path: extractDir }))
         .on("close", () => {
-            // Construct a new game entry using the provided metadata.
-            const newGame = {
-                id: projectId,
-                title,
-                author,
-                thumbnail: `/builds/${projectId}/thumbnail.png`, // Thumbnail URL
-                build: {
-                    loaderUrl: `/builds/${projectId}/Build/${projectId}.loader.js`,
-                    dataUrl: `/builds/${projectId}/Build/${projectId}.data`,
-                    frameworkUrl: `/builds/${projectId}/Build/${projectId}.framework.js`,
-                    codeUrl: `/builds/${projectId}/Build/${projectId}.wasm`
-                }
-            };
+            // After extraction, decompress any compressed files in the Build folder.
+            const buildFolder = path.join(extractDir, "Build");
+            decompressFilesInFolder(buildFolder)
+                .then(() => {
+                    // Now, all compressed files should be replaced with uncompressed versions.
+                    const newGame = {
+                        id: projectId,
+                        title,
+                        author,
+                        thumbnail: `/builds/${projectId}/thumbnail.png`,
+                        build: {
+                            loaderUrl: `/builds/${projectId}/Build/${projectId}.loader.js`,
+                            dataUrl: `/builds/${projectId}/Build/${projectId}.data`,
+                            frameworkUrl: `/builds/${projectId}/Build/${projectId}.framework.js`,
+                            codeUrl: `/builds/${projectId}/Build/${projectId}.wasm`
+                        }
+                    };
 
-            games.push(newGame);
+                    games.push(newGame);
 
-            fs.writeFile(gamesJsonPath, JSON.stringify(games, null, 2), (err) => {
-                if (err) {
-                    return res.status(500).json({ error: "Error updating games.json" });
-                }
-                // Clean up the uploaded ZIP file
-                fs.unlink(zipFile.path, () => { });
-                res.json({ success: true, game: newGame });
-            });
+                    fs.writeFile(gamesJsonPath, JSON.stringify(games, null, 2), (err) => {
+                        if (err) {
+                            return res.status(500).json({ error: "Error updating games.json" });
+                        }
+                        // Remove the uploaded ZIP file
+                        fs.unlink(zipFile.path, () => { });
+                        res.json({ success: true, game: newGame });
+                    });
+                })
+                .catch((err) => {
+                    console.error("Error decompressing files:", err);
+                    res.status(500).json({ error: "Error decompressing build files" });
+                });
         })
         .on("error", (err) => {
             res.status(500).json({ error: "Error extracting zip file", details: err.message });
