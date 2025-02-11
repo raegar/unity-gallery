@@ -3,7 +3,7 @@ import React, { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import UnityGame from "./UnityGame"; // Component that wraps your useUnityContext hook
 import logo from "./0_ARU-Peterborough-blue-RGB1.png"; // Your logo
-import "./GamePlayer.css"; // Updated styling
+import "./GamePlayer.css"; // Your CSS file
 
 function GamePlayer() {
   const { id } = useParams();
@@ -31,8 +31,7 @@ function GamePlayer() {
       });
   }, [id]);
 
-  if (loading)
-    return <div className="game-loading">Loading game metadata...</div>;
+  if (loading) return <div className="game-loading">Loading game metadata...</div>;
   if (error) return <div className="game-error">{error}</div>;
 
   return (
@@ -47,8 +46,10 @@ function GamePlayer() {
         </div>
       </main>
       <footer className="game-footer">
-        <Link className="back-button" to="/">
-          ← Back to Gallery
+        <Link className="back-button" to="/">← Back to Gallery</Link>
+        {/* Add the Edit Game link here */}
+        <Link className="edit-button" to={`/edit/${game.id}`}>
+          Edit Game
         </Link>
       </footer>
     </div>

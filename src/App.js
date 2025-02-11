@@ -1,9 +1,10 @@
-// src/App.js (or wherever your routes are defined)
+// src/App.js
 import React from "react";
 import { BrowserRouter as Router, Routes, Route, Link } from "react-router-dom";
 import Gallery from "./Gallery";
 import GamePlayer from "./GamePlayer";
 import UploadGame from "./UploadGame";
+import EditGame from "./EditGame";
 
 function App() {
   return (
@@ -16,6 +17,7 @@ function App() {
         <Route path="/" element={<Gallery />} />
         <Route path="/play/:id" element={<GamePlayer />} />
         <Route path="/upload" element={<UploadGame />} />
+        <Route path="/edit/:id" element={<EditGame />} />
       </Routes>
     </Router>
   );

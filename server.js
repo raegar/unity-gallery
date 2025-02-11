@@ -109,5 +109,67 @@ app.post("/upload", upload.fields([
         });
 });
 
+app.put("/games/:id", (req, res) => {
+    const projectId = req.params.id;
+    const { title, author } = req.body; // Extend with any additional metadata fields if needed.
+    const gamesJsonPath = path.join(__dirname, "public", "games.json");
+
+    let games = [];
+    try {
+        games = JSON.parse(fs.readFileSync(gamesJsonPath, "utf8"));
+    } catch (err) {
+        return res.status(500).json({ error: "Error reading games.json" });
+    }
+
+    const gameIndex = games.findIndex(game => game.id === projectId);
+    if (gameIndex === -1) {
+        return res.status(404).json({ error: "Game not found" });
+    }
+
+    // Update the metadata
+    if (title) games[gameIndex].title = title;
+    if (author) games[gameIndex].author = author;
+    // Add further fields as needed
+
+    fs.writeFile(gamesJsonPath, JSON.stringify(games, null, 2), (err) => {
+        if (err) {
+            return res.status(500).json({ error: "Error updating games.json" });
+        }
+        res.json({ success: true, game: games[gameIndex] });
+    });
+});
+
+app.delete("/games/:id", (req, res) => {
+    const projectId = req.params.id;
+    const extractDir = path.join(__dirname, "public", "builds", projectId);
+    const gamesJsonPath = path.join(__dirname, "public", "games.json");
+
+    // Remove the project folder (if it exists)
+    if (fs.existsSync(extractDir)) {
+        try {
+            fs.rmSync(extractDir, { recursive: true, force: true });
+        } catch (err) {
+            console.error("Error deleting project folder:", err);
+            return res.status(500).json({ error: "Error deleting project folder." });
+        }
+    }
+
+    // Update games.json: filter out the deleted game
+    let games = [];
+    try {
+        games = JSON.parse(fs.readFileSync(gamesJsonPath, "utf8"));
+    } catch (err) {
+        return res.status(500).json({ error: "Error reading games.json" });
+    }
+
+    const newGames = games.filter(game => game.id !== projectId);
+    fs.writeFile(gamesJsonPath, JSON.stringify(newGames, null, 2), (err) => {
+        if (err) {
+            return res.status(500).json({ error: "Error updating games.json" });
+        }
+        res.json({ success: true });
+    });
+});
+
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

@@ -4,7 +4,8 @@ body {
   margin: 0;
   padding: 0;
   font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-  background-color: #f2f3f6; /* Neutral Grey */
+  background-color: #f2f3f6;
+  /* Neutral Grey */
 }
 
 /* Overall container to center the page */
@@ -20,7 +21,8 @@ body {
 /* Header styling */
 .game-header {
   width: 100%;
-  background-color: #071d49; /* Primary Blue */
+  background-color: #071d49;
+  /* Primary Blue */
   color: #ffffff;
   text-align: center;
   padding: 1.5rem;
@@ -34,7 +36,8 @@ body {
   margin-bottom: 1rem;
   padding: 0.5rem;
   background-color: #ffffff;
-  border: 2px solid #ffd100; /* Accent Yellow */
+  border: 2px solid #ffd100;
+  /* Accent Yellow */
   border-radius: 4px;
   filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.2));
 }
@@ -56,8 +59,10 @@ body {
 
 /* Unity game wrapper with fixed dimensions to center the game */
 .unity-wrapper {
-  width: 800px; /* Set a fixed width (adjust as needed) */
-  height: 600px; /* Set a fixed height (adjust as needed) */
+  width: 800px;
+  /* Set a fixed width (adjust as needed) */
+  height: 600px;
+  /* Set a fixed height (adjust as needed) */
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
   border-radius: 8px;
   overflow: hidden;
@@ -72,7 +77,8 @@ body {
 .back-button {
   text-decoration: none;
   color: #ffffff;
-  background: #071d49; /* Primary Blue */
+  background: #071d49;
+  /* Primary Blue */
   padding: 0.6rem 1.2rem;
   border-radius: 6px;
   font-weight: 600;
@@ -80,7 +86,8 @@ body {
 }
 
 .back-button:hover {
-  background: #ffd100; /* Accent Yellow on hover */
+  background: #ffd100;
+  /* Accent Yellow on hover */
   transform: translateY(-2px);
   color: #071d49;
 }
@@ -91,4 +98,24 @@ body {
   text-align: center;
   padding: 2rem;
   font-size: 1.2rem;
+}
+
+.edit-button {
+  text-decoration: none;
+  color: #ffffff;
+  background: #071d49;
+  /* Primary Blue */
+  padding: 0.6rem 1.2rem;
+  border-radius: 6px;
+  font-weight: 600;
+  transition: background 0.3s ease, transform 0.2s ease;
+  margin-left: 1rem;
+  /* Add spacing from the back button */
+}
+
+.edit-button:hover {
+  background: #ffd100;
+  /* Accent Yellow on hover */
+  transform: translateY(-2px);
+  color: #071d49;
 }
