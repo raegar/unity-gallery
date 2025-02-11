@@ -11,14 +11,36 @@
     }
   },
   {
-    "id": "WordAchitect",
-    "title": "Word Achitect",
-    "thumbnail": "/builds/WordAchitect/thumbnail.png",
+    "id": "WordArchitect",
+    "title": "Word Architect",
+    "thumbnail": "/builds/WordArchitect/thumbnail.png",
     "build": {
-      "loaderUrl": "/builds/WordAchitect/Build/WordAchitect.loader.js",
-      "dataUrl": "/builds/WordAchitect/Build/WordAchitect.data",
-      "frameworkUrl": "/builds/WordAchitect/Build/WordAchitect.framework.js",
-      "codeUrl": "/builds/WordAchitect/Build/WordAchitect.wasm"
+      "loaderUrl": "/builds/WordArchitect/Build/WordArchitect.loader.js",
+      "dataUrl": "/builds/WordArchitect/Build/WordArchitect.data",
+      "frameworkUrl": "/builds/WordArchitect/Build/WordArchitect.framework.js",
+      "codeUrl": "/builds/WordArchitect/Build/WordArchitect.wasm"
+    }
+  },
+  {
+    "id": "WordontheStreet",
+    "title": "Word on the Street",
+    "thumbnail": "/builds/WordontheStreet/thumbnail.png",
+    "build": {
+      "loaderUrl": "/builds/WordontheStreet/Build/WordontheStreet.loader.js",
+      "dataUrl": "/builds/WordontheStreet/Build/WordontheStreet.data",
+      "frameworkUrl": "/builds/WordontheStreet/Build/WordontheStreet.framework.js",
+      "codeUrl": "/builds/WordontheStreet/Build/WordontheStreet.wasm"
+    }
+  },
+  {
+    "id": "WordWorm",
+    "title": "WormWord",
+    "thumbnail": "/builds/WordWorm/thumbnail.png",
+    "build": {
+      "loaderUrl": "/builds/WordWorm/Build/WordWorm.loader.js",
+      "dataUrl": "/builds/WordWorm/Build/WordWorm.data",
+      "frameworkUrl": "/builds/WordWorm/Build/WordWorm.framework.js",
+      "codeUrl": "/builds/WordWorm/Build/WordWorm.wasm"
     }
   },
   {
@@ -32,5 +54,4 @@
       "codeUrl": "/builds/TowerDefense/Build/WebGL Builds.wasm"
     }
   }
-  
 ]

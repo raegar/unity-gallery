@@ -2,7 +2,8 @@ body {
   margin: 0;
   padding: 0;
   font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
-  background-color: #f2f3f6; /* Neutral Grey */
+  background-color: #f2f3f6;
+  /* Neutral Grey */
 }
 
 .gallery-page {
@@ -16,20 +17,27 @@ body {
   text-align: center;
   margin-bottom: 2rem;
   padding: 1.5rem;
-  background-color: #071d49; /* Primary Blue */
+  background-color: #071d49;
+  /* Primary Blue */
   color: #ffffff;
   border-radius: 8px;
 }
 
 .gallery-logo {
-  max-width: 200px; /* or adjust as needed */
+  max-width: 200px;
+  /* or adjust as needed */
   height: auto;
   margin-bottom: 1rem;
-  padding: 0.5rem; /* add some padding */
-  background-color: #ffffff; /* white background for contrast */
-  border: 2px solid #ffd100; /* accent yellow border */
-  border-radius: 4px; /* optional rounded corners */
-  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.2)); /* subtle shadow */
+  padding: 0.5rem;
+  /* add some padding */
+  background-color: #ffffff;
+  /* white background for contrast */
+  border: 2px solid #ffd100;
+  /* accent yellow border */
+  border-radius: 4px;
+  /* optional rounded corners */
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.2));
+  /* subtle shadow */
 }
 
 .gallery-header h1 {
@@ -46,9 +54,17 @@ body {
 /* Gallery Grid */
 .gallery {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   gap: 1.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
 }
+
+/* When the viewport is wide enough, limit to 3 columns */
+@media (min-width: 900px) {
+  .gallery {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
 
 .gallery-item {
   background: #ffffff;
@@ -85,7 +101,8 @@ body {
 
 .gallery-item h3 {
   margin: 0.8rem 0 1rem;
-  color: #071d49; /* Primary Blue for titles */
+  color: #071d49;
+  /* Primary Blue for titles */
   text-align: center;
 }
 
@@ -93,7 +110,8 @@ body {
 .play-button {
   text-decoration: none;
   color: #ffffff;
-  background: #071d49; /* Primary Blue base */
+  background: #071d49;
+  /* Primary Blue base */
   padding: 0.6rem 1.2rem;
   border-radius: 6px;
   text-align: center;
@@ -103,7 +121,8 @@ body {
 }
 
 .play-button:hover {
-  background: #ffd100; /* Accent Yellow on hover */
+  background: #ffd100;
+  /* Accent Yellow on hover */
   transform: translateY(-2px);
   color: #071d49;
 }
