@@ -1,7 +1,9 @@
 // src/GamePlayer.js
 import React, { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
-import UnityGame from "./UnityGame";  // import your UnityGame component
+import UnityGame from "./UnityGame"; // Component that wraps your useUnityContext hook
+import logo from "./0_ARU-Peterborough-blue-RGB1.png"; // Your logo
+import "./GamePlayer.css"; // Updated styling
 
 function GamePlayer() {
   const { id } = useParams();
@@ -10,7 +12,6 @@ function GamePlayer() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Fetch the game metadata from the public folder.
     fetch("/games.json")
       .then((res) => res.json())
       .then((games) => {
@@ -24,22 +25,32 @@ function GamePlayer() {
         setLoading(false);
       })
       .catch((err) => {
-        console.error("Error fetching games:", err);
+        console.error("Error loading game metadata:", err);
         setError("Error loading game metadata.");
         setLoading(false);
       });
   }, [id]);
 
-  if (loading) return <div>Loading game metadata...</div>;
-  if (error) return <div>{error}</div>;
+  if (loading)
+    return <div className="game-loading">Loading game metadata...</div>;
+  if (error) return <div className="game-error">{error}</div>;
 
   return (
-    <div>
-      <h1>{game.title}</h1>
-      {/* Pass the build configuration to the UnityGame component */}
-      <UnityGame build={game.build} />
-      <br />
-      <Link to="/">Back to Gallery</Link>
+    <div className="game-page">
+      <header className="game-header">
+        <img src={logo} alt="University Logo" className="game-logo" />
+        <h1>{game.title}</h1>
+      </header>
+      <main className="game-content">
+        <div className="unity-wrapper">
+          <UnityGame build={game.build} />
+        </div>
+      </main>
+      <footer className="game-footer">
+        <Link className="back-button" to="/">
+          ← Back to Gallery
+        </Link>
+      </footer>
     </div>
   );
 }

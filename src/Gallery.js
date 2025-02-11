@@ -1,4 +1,3 @@
-// src/Gallery.js
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import logo from "./0_ARU-Peterborough-blue-RGB1.png"; // Import the logo from src

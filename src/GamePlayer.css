@@ -1,0 +1,94 @@
+/* src/GamePlayer.css */
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #f2f3f6; /* Neutral Grey */
+}
+
+/* Overall container to center the page */
+.game-page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* Header styling */
+.game-header {
+  width: 100%;
+  background-color: #071d49; /* Primary Blue */
+  color: #ffffff;
+  text-align: center;
+  padding: 1.5rem;
+  border-radius: 8px;
+  margin-bottom: 2rem;
+}
+
+.game-logo {
+  max-width: 150px;
+  height: auto;
+  margin-bottom: 1rem;
+  padding: 0.5rem;
+  background-color: #ffffff;
+  border: 2px solid #ffd100; /* Accent Yellow */
+  border-radius: 4px;
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.2));
+}
+
+.game-header h1 {
+  margin: 0;
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+/* Main content area to center the Unity game */
+.game-content {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 2rem;
+}
+
+/* Unity game wrapper with fixed dimensions to center the game */
+.unity-wrapper {
+  width: 800px; /* Set a fixed width (adjust as needed) */
+  height: 600px; /* Set a fixed height (adjust as needed) */
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+/* Footer styling */
+.game-footer {
+  width: 100%;
+  text-align: center;
+}
+
+.back-button {
+  text-decoration: none;
+  color: #ffffff;
+  background: #071d49; /* Primary Blue */
+  padding: 0.6rem 1.2rem;
+  border-radius: 6px;
+  font-weight: 600;
+  transition: background 0.3s ease, transform 0.2s ease;
+}
+
+.back-button:hover {
+  background: #ffd100; /* Accent Yellow on hover */
+  transform: translateY(-2px);
+  color: #071d49;
+}
+
+/* Loading and error states */
+.game-loading,
+.game-error {
+  text-align: center;
+  padding: 2rem;
+  font-size: 1.2rem;
+}
