@@ -2,7 +2,7 @@
 
 ## Overview
 
-The UUnity Student Game Showcase Web App is a platform designed for showcasing and managing student-developed Unity WebGL games incluuding game uploads, presenting a dynamic gallery of games, and providing powerful filtering and sorting options for end users.
+The Unity Student Game Showcase Web App is a platform designed for showcasing and managing student-developed Unity WebGL games incluuding game uploads, presenting a dynamic gallery of games, and providing powerful filtering and sorting options for end users.
 
 ## Installation
 
