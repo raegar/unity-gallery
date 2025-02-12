@@ -1,11 +1,11 @@
 // src/Gallery.js
 import React, { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { FaEdit } from "react-icons/fa"; // Import the edit icon
 import logo from "./0_ARU-Peterborough-blue-RGB1.png";
+import { FaEdit } from "react-icons/fa"; // FontAwesome icons
 import "./Gallery.css";
 
-// Fisher–Yates shuffle helper
+// Helper: Fisher–Yates shuffle algorithm
 const shuffleArray = (array) => {
   const newArray = array.slice();
   for (let i = newArray.length - 1; i > 0; i--) {
@@ -24,19 +24,24 @@ function Gallery() {
     fetch("/games.json")
       .then((res) => res.json())
       .then((data) => {
-        // Shuffle initially if random sorting is desired
+        // Shuffle the games array initially
         setGames(shuffleArray(data));
       })
       .catch((error) => console.error("Error fetching games:", error));
   }, []);
 
-  // Filter games by module code if provided.
+  // Derive a list of unique module codes from the games array (exclude empty values)
+  const moduleCodes = Array.from(
+    new Set(games.map((game) => game.moduleCode).filter(code => code && code.trim() !== ""))
+  );
+
+  // Filter games by module code if a specific module is selected.
   const filteredGames = games.filter((game) => {
-    if (!moduleFilter) return true;
-    return game.moduleCode.toLowerCase().includes(moduleFilter.toLowerCase());
+    if (!moduleFilter) return true; // if no filter selected, show all
+    return game.moduleCode === moduleFilter;
   });
 
-  // Sort the filtered games according to sortField.
+  // Sort the filtered games based on sortField.
   let sortedGames = [...filteredGames];
   if (sortField === "title") {
     sortedGames.sort((a, b) => a.title.localeCompare(b.title));
@@ -56,20 +61,23 @@ function Gallery() {
         <img src={logo} alt="University Logo" className="gallery-logo" />
         <h1>Student Game Showcase</h1>
         <p>
-          Welcome to our gallery of student games. Explore innovative projects
-          and interactive experiences built by our talented students.
+          Welcome to our gallery of student games. Explore innovative projects and interactive
+          experiences built by our talented students.
         </p>
       </header>
 
       {/* Filter and Sort Controls */}
       <div className="gallery-filters" style={{ padding: "1rem", textAlign: "center" }}>
-        <input
-          type="text"
-          placeholder="Filter by Module Code"
+        <select
           value={moduleFilter}
           onChange={(e) => setModuleFilter(e.target.value)}
           style={{ marginRight: "1rem", padding: "0.5rem" }}
-        />
+        >
+          <option value="">All Modules</option>
+          {moduleCodes.map((code) => (
+            <option key={code} value={code}>{code}</option>
+          ))}
+        </select>
         <select
           value={sortField}
           onChange={(e) => setSortField(e.target.value)}
@@ -115,9 +123,8 @@ function Gallery() {
             </div>
           </div>
         ))}
-
       </div>
-    </div >
+    </div>
   );
 }
 
