@@ -2,7 +2,6 @@
 import React, { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import UnityGame from "./UnityGame"; // Component that wraps your useUnityContext hook
-import logo from "./0_ARU-Peterborough-blue-RGB1.png"; // Your logo
 import "./GamePlayer.css"; // Your CSS file
 
 function GamePlayer() {
