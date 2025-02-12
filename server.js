@@ -76,6 +76,15 @@ const app = express();
 // Configure multer to handle multiple fields
 const upload = multer({ dest: "uploads/" });
 
+// Serve static files from the builds folder with cache-control headers for thumbnails.
+app.use('/builds', express.static(path.join(__dirname, 'public', 'builds'), {
+    setHeaders: (res, filePath) => {
+        if (filePath.endsWith('thumbnail.png')) {
+            res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+        }
+    }
+}));
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -231,6 +240,28 @@ app.put("/games/:id", (req, res) => {
         }
         res.json({ success: true, game: games[gameIndex] });
     });
+});
+
+app.put("/games/:id/thumbnail", upload.single("thumbnail"), (req, res) => {
+    const projectId = req.params.id;
+    const thumbnailFile = req.file;
+    if (!thumbnailFile) {
+        return res.status(400).json({ error: "No thumbnail file provided." });
+    }
+    // Define the destination for the new thumbnail.
+    const thumbDest = path.join(__dirname, "public", "builds", projectId, "thumbnail.png");
+
+    try {
+        // Replace the existing thumbnail (if any) by moving the new file.
+        fs.renameSync(thumbnailFile.path, thumbDest);
+    } catch (err) {
+        console.error("Error moving thumbnail file:", err);
+        return res.status(500).json({ error: "Error processing thumbnail." });
+    }
+
+    // Optionally, you could update games.json here if you wanted to store a timestamp
+    // or other metadata. For our purposes, the thumbnail URL is fixed.
+    res.json({ success: true, thumbnail: `/builds/${projectId}/thumbnail.png` });
 });
 
 app.delete("/games/:id", (req, res) => {
