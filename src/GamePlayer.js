@@ -37,8 +37,8 @@ function GamePlayer() {
   return (
     <div className="game-page">
       <header className="game-header">
-        <img src={logo} alt="University Logo" className="game-logo" />
         <h1>{game.title}</h1>
+        <p className="game-author-light">by {game.author}</p>
       </header>
       <main className="game-content">
         <div className="unity-wrapper">

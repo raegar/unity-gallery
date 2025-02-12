@@ -74,6 +74,16 @@ body {
   text-align: center;
 }
 
+/* Style for the author text */
+.game-author-light {
+  font-size: 0.9rem;
+  color: #ffffff;
+  text-align: center;
+  margin-top: 0rem;
+  margin-bottom: 0.5rem;
+  font-style: italic;
+}
+
 .back-button {
   text-decoration: none;
   color: #ffffff;
