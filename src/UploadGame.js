@@ -40,7 +40,7 @@ function UploadGame() {
                 }
 
                 // Extract owner and repo from the provided GitHub repository URL.
-                const match = gitHubUrl.match(/https:\/\/github\.com\/([^\/]+)\/([^\/]+)\/?$/);
+                const match = gitHubUrl.match(/https:\/\/github\.com\/([^/]+)\/([^/]+)\/?$/);
                 if (!match) {
                     setUploadStatus("Invalid GitHub repository URL.");
                     return;

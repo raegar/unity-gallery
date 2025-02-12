@@ -264,7 +264,7 @@ app.put("/games/:id/thumbnail", upload.single("thumbnail"), (req, res) => {
         return res.status(500).json({ error: "Error processing thumbnail." });
     }
 
-    // Optionally, you could update games.json here if you wanted to store a timestamp
+    // Optionally, we could update games.json here if we wanted to store a timestamp
     // or other metadata. For our purposes, the thumbnail URL is fixed.
     res.json({ success: true, thumbnail: `/builds/${projectId}/thumbnail.png` });
 });

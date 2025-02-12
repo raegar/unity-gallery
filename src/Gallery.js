@@ -3,15 +3,30 @@ import { Link } from "react-router-dom";
 import logo from "./0_ARU-Peterborough-blue-RGB1.png"; // Import the logo from src
 import "./Gallery.css"; // Import the CSS file
 
+// Fisher–Yates shuffle
+const shuffleArray = (array) => {
+  const newArray = array.slice();
+  for (let i = newArray.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [newArray[i], newArray[j]] = [newArray[j], newArray[i]];
+  }
+  return newArray;
+};
+
+
 function Gallery() {
   const [games, setGames] = useState([]);
 
   useEffect(() => {
-    fetch("/games.json")
+    fetch('/games.json')
       .then((res) => res.json())
-      .then((data) => setGames(data))
+      .then((data) => {
+        const shuffledData = shuffleArray(data);
+        setGames(shuffledData);
+      })
       .catch((error) => console.error("Error fetching games:", error));
   }, []);
+
 
   return (
     <div className="gallery-page">
