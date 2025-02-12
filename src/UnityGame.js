@@ -1,15 +1,30 @@
 // src/UnityGame.js
-import React from "react";
+import React, { useEffect } from "react";
 import { Unity, useUnityContext } from "react-unity-webgl";
 
 function UnityGame({ build }) {
-  // Call the hook with the build configuration provided via props.
-  const { unityProvider, isLoaded, loadingProgression } = useUnityContext({
+  // Include 'unload' from useUnityContext so we can call it in cleanup.
+  const {
+    unityProvider,
+    isLoaded,
+    loadingProgression,
+    unload, // <-- key addition
+  } = useUnityContext({
     loaderUrl: build.loaderUrl,
     dataUrl: build.dataUrl,
     frameworkUrl: build.frameworkUrl,
     codeUrl: build.codeUrl,
   });
+
+  // On unmount, call unload() to fully stop the Unity instance
+  useEffect(() => {
+    return () => {
+      console.log("[UnityGame] Unmounting - unloading Unity instance...");
+      unload()
+        .then(() => console.log("[UnityGame] Unity instance unloaded."))
+        .catch((error) => console.error("[UnityGame] Error unloading Unity:", error));
+    };
+  }, [unload]);
 
   // Calculate loading percentage (if desired)
   const loadingPercentage = Math.round(loadingProgression * 100);
