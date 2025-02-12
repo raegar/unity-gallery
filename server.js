@@ -1,5 +1,6 @@
 // server.js
 const express = require("express");
+const axios = require('axios');
 const multer = require("multer");
 const unzipper = require("unzipper");
 const fs = require("fs");
@@ -75,6 +76,10 @@ const app = express();
 
 // Configure multer to handle multiple fields
 const upload = multer({ dest: "uploads/" });
+
+const cors = require('cors');
+app.use(cors());
+
 
 // Serve static files from the builds folder with cache-control headers for thumbnails.
 app.use('/builds', express.static(path.join(__dirname, 'public', 'builds'), {
@@ -295,6 +300,31 @@ app.delete("/games/:id", (req, res) => {
         res.json({ success: true });
     });
 });
+
+
+// Proxy route to fetch GitHub release asset
+app.get('/proxy/github/:owner/:repo/:tag/:assetName?', async (req, res) => {
+    const { owner, repo, tag, assetName } = req.params;
+    // Use the provided assetName if it exists and is not empty, otherwise default.
+    const fileName = assetName && assetName.trim() !== "" ? assetName : `${repo}-${tag}.zip`;
+    const assetUrl = `https://github.com/${owner}/${repo}/releases/download/${tag}/${fileName}`;
+
+    try {
+        const response = await axios({
+            url: assetUrl,
+            method: 'GET',
+            responseType: 'stream',
+        });
+        // Set headers so the file is downloaded properly.
+        res.setHeader('Content-Disposition', `attachment; filename=${fileName}`);
+        res.setHeader('Content-Type', 'application/zip');
+        response.data.pipe(res);
+    } catch (error) {
+        console.error('Error fetching GitHub asset:', error.message);
+        res.status(500).json({ error: 'Failed to fetch GitHub asset.' });
+    }
+});
+
 
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
