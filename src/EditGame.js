@@ -1,6 +1,7 @@
 // src/EditGame.js
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
+import "./EditGame.css"; // Import the CSS file
 
 function EditGame() {
     const { id } = useParams();
@@ -143,7 +144,11 @@ function EditGame() {
                         />
                     </label>
                 </div>
+                <div className="edit-image-wrapper">
+                    <img src={game.thumbnail} alt={game.title} />
+                </div>
                 <div style={{ marginBottom: '1rem' }}>
+
                     <label>
                         New Thumbnail (optional, 640x480 recommended):
                         <input

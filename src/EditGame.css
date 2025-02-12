@@ -1,0 +1,7 @@
+.edit-image-wrapper img {
+    width: 70%;
+    height: auto;
+    /* maintains aspect ratio */
+    display: block;
+    /* removes inline-gap spacing */
+}
