@@ -1,16 +1,36 @@
+// src/UploadGame.js
 import React, { useState } from "react";
 
 function UploadGame() {
     const [title, setTitle] = useState("");
     const [author, setAuthor] = useState("");
     const [projectId, setProjectId] = useState("");
+    const [projectIdManuallyChanged, setProjectIdManuallyChanged] = useState(false);
+    const [moduleCode, setModuleCode] = useState("");
     const [zipFile, setZipFile] = useState(null);
     const [thumbnail, setThumbnail] = useState(null);
     const [overwrite, setOverwrite] = useState(false);
     const [uploadStatus, setUploadStatus] = useState("");
     const [useGitHub, setUseGitHub] = useState(false);
     const [gitHubUrl, setGitHubUrl] = useState("");
-    const [assetName, setAssetName] = useState("");
+
+    // When the Title changes, update the title state and, if the user hasn't manually changed projectId,
+    // auto-generate it by stripping spaces.
+    const handleTitleChange = (e) => {
+        const newTitle = e.target.value;
+        setTitle(newTitle);
+        if (!projectIdManuallyChanged) {
+            // Simple normalization: remove spaces. You might choose to also lowercase, remove punctuation, etc.
+            const newProjectId = newTitle.replace(/\s+/g, "");
+            setProjectId(newProjectId);
+        }
+    };
+
+    // When the Project ID field is changed manually, update state and set a flag
+    const handleProjectIdChange = (e) => {
+        setProjectId(e.target.value);
+        setProjectIdManuallyChanged(true);
+    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -26,6 +46,7 @@ function UploadGame() {
         formData.append("title", title);
         formData.append("author", author);
         formData.append("projectId", projectId);
+        formData.append("moduleCode", moduleCode);
         formData.append("overwrite", overwrite ? "true" : "false");
 
         if (thumbnail) {
@@ -39,8 +60,7 @@ function UploadGame() {
                     return;
                 }
 
-                // Extract owner and repo from the provided GitHub repository URL.
-                const match = gitHubUrl.match(/https:\/\/github\.com\/([^/]+)\/([^/]+)\/?$/);
+                const match = gitHubUrl.match(/https:\/\/github\.com\/([^\/]+)\/([^\/]+)\/?$/);
                 if (!match) {
                     setUploadStatus("Invalid GitHub repository URL.");
                     return;
@@ -48,31 +68,14 @@ function UploadGame() {
                 const owner = match[1];
                 const repo = match[2];
 
-                // Fetch the latest release information from GitHub.
-                const releaseResponse = await fetch(
-                    `https://api.github.com/repos/${owner}/${repo}/releases/latest`
-                );
-                if (!releaseResponse.ok) {
-                    setUploadStatus("Failed to fetch the latest release from GitHub.");
-                    return;
-                }
-                const releaseData = await releaseResponse.json();
-                const tag = releaseData.tag_name; // e.g., "v0.0.1"
-
-                // Construct the proxy URL. If assetName is provided, append it.
-                let proxyUrl = `http://localhost:3001/proxy/github/${owner}/${repo}/${tag}`;
-                if (assetName.trim() !== "") {
-                    proxyUrl += `/${assetName.trim()}`;
-                }
-
-                // Fetch the ZIP file via the proxy.
+                const proxyUrl = `http://localhost:3001/proxy/github/${owner}/${repo}/latest`;
                 const zipResponse = await fetch(proxyUrl);
                 if (!zipResponse.ok) {
                     setUploadStatus("Failed to download the ZIP file from the proxy.");
                     return;
                 }
                 const zipBlob = await zipResponse.blob();
-                const zipFileFromGitHub = new File([zipBlob], assetName.trim() || `${repo}-${tag}.zip`, {
+                const zipFileFromGitHub = new File([zipBlob], `${repo}.zip`, {
                     type: "application/zip",
                 });
                 formData.append("zipfile", zipFileFromGitHub);
@@ -100,7 +103,6 @@ function UploadGame() {
         }
     };
 
-
     return (
         <div style={{ maxWidth: "600px", margin: "2rem auto", padding: "1rem", background: "#f2f3f6", borderRadius: "8px" }}>
             <h2>Upload a New Game</h2>
@@ -108,22 +110,51 @@ function UploadGame() {
                 <div style={{ marginBottom: "1rem" }}>
                     <label>
                         Title:
-                        <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} required style={{ width: "100%" }} />
+                        <input
+                            type="text"
+                            value={title}
+                            onChange={handleTitleChange}
+                            required
+                            style={{ width: "100%" }}
+                        />
                     </label>
                 </div>
                 <div style={{ marginBottom: "1rem" }}>
                     <label>
                         Author:
-                        <input type="text" value={author} onChange={(e) => setAuthor(e.target.value)} required style={{ width: "100%" }} />
+                        <input
+                            type="text"
+                            value={author}
+                            onChange={(e) => setAuthor(e.target.value)}
+                            required
+                            style={{ width: "100%" }}
+                        />
                     </label>
                 </div>
                 <div style={{ marginBottom: "1rem" }}>
                     <label>
                         Project ID:
-                        <input type="text" value={projectId} onChange={(e) => setProjectId(e.target.value)} required style={{ width: "100%" }} />
+                        <input
+                            type="text"
+                            value={projectId}
+                            onChange={handleProjectIdChange}
+                            required
+                            style={{ width: "100%" }}
+                        />
                     </label>
                 </div>
-
+                <div style={{ marginBottom: "1rem" }}>
+                    <label>
+                        Module Code (optional):
+                        <input
+                            type="text"
+                            value={moduleCode}
+                            onChange={(e) => setModuleCode(e.target.value)}
+                            placeholder="e.g., MOD001234"
+                            style={{ width: "100%" }}
+                        />
+                    </label>
+                </div>
                 <div style={{ marginBottom: "1rem" }}>
                     <label>
                         Use GitHub URL:
@@ -134,34 +165,19 @@ function UploadGame() {
                         />
                     </label>
                 </div>
-
                 {useGitHub ? (
-                    <>
-                        <div style={{ marginBottom: "1rem" }}>
-                            <label>
-                                GitHub Repository URL:
-                                <input
-                                    type="url"
-                                    value={gitHubUrl}
-                                    onChange={(e) => setGitHubUrl(e.target.value)}
-                                    required
-                                    style={{ width: "100%" }}
-                                />
-                            </label>
-                        </div>
-                        <div style={{ marginBottom: "1rem" }}>
-                            <label>
-                                Asset Name (optional):
-                                <input
-                                    type="text"
-                                    value={assetName}
-                                    onChange={(e) => setAssetName(e.target.value)}
-                                    placeholder="e.g., LetterRun-webgl.zip"
-                                    style={{ width: "100%" }}
-                                />
-                            </label>
-                        </div>
-                    </>
+                    <div style={{ marginBottom: "1rem" }}>
+                        <label>
+                            GitHub Repository URL:
+                            <input
+                                type="url"
+                                value={gitHubUrl}
+                                onChange={(e) => setGitHubUrl(e.target.value)}
+                                required
+                                style={{ width: "100%" }}
+                            />
+                        </label>
+                    </div>
                 ) : (
                     <div style={{ marginBottom: "1rem" }}>
                         <label>
@@ -175,18 +191,24 @@ function UploadGame() {
                         </label>
                     </div>
                 )}
-
-
                 <div style={{ marginBottom: "1rem" }}>
                     <label>
                         Thumbnail (640x480 recommended):
-                        <input type="file" accept="image/*" onChange={(e) => setThumbnail(e.target.files[0])} />
+                        <input
+                            type="file"
+                            accept="image/*"
+                            onChange={(e) => setThumbnail(e.target.files[0])}
+                        />
                     </label>
                 </div>
                 <div style={{ marginBottom: "1rem" }}>
                     <label>
                         Overwrite if exists:
-                        <input type="checkbox" checked={overwrite} onChange={(e) => setOverwrite(e.target.checked)} />
+                        <input
+                            type="checkbox"
+                            checked={overwrite}
+                            onChange={(e) => setOverwrite(e.target.checked)}
+                        />
                     </label>
                 </div>
                 <button

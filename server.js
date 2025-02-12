@@ -138,7 +138,7 @@ app.post(
         { name: "thumbnail", maxCount: 1 },
     ]),
     (req, res) => {
-        const { title, author, projectId, overwrite } = req.body;
+        const { title, author, projectId, overwrite, moduleCode } = req.body;
         const zipFile = req.files["zipfile"] ? req.files["zipfile"][0] : null;
         const thumbnailFile = req.files["thumbnail"]
             ? req.files["thumbnail"][0]
@@ -203,93 +203,69 @@ app.post(
         fs.createReadStream(zipFile.path)
             .pipe(unzipper.Extract({ path: extractDir }))
             .on("close", () => {
-                // Locate the Build folder recursively.
+                // Find the Build folder and process as before…
                 let foundBuildFolder = findBuildFolder(extractDir);
                 if (!foundBuildFolder) {
-                    return res
-                        .status(500)
-                        .json({ error: "Build folder not found in the uploaded ZIP." });
+                    return res.status(500).json({ error: "Build folder not found in the uploaded ZIP." });
                 }
-
                 const targetBuildFolder = path.join(extractDir, "Build");
                 if (foundBuildFolder !== targetBuildFolder) {
                     try {
                         fs.renameSync(foundBuildFolder, targetBuildFolder);
-                        console.log(
-                            "Moved Build folder to target location:",
-                            targetBuildFolder
-                        );
                     } catch (err) {
-                        console.error("Error moving Build folder:", err);
-                        return res
-                            .status(500)
-                            .json({ error: "Error relocating Build folder." });
+                        return res.status(500).json({ error: "Error relocating Build folder." });
                     }
                 }
 
-                // Determine the current base name from the loader file.
+                // Determine current base name from the loader file.
                 const buildFiles = fs.readdirSync(targetBuildFolder);
-                const loaderFile = buildFiles.find((file) =>
-                    file.endsWith(".loader.js")
-                );
+                const loaderFile = buildFiles.find((file) => file.endsWith(".loader.js"));
                 if (!loaderFile) {
-                    return res
-                        .status(500)
-                        .json({ error: "Loader file not found in Build folder." });
+                    return res.status(500).json({ error: "Loader file not found in Build folder." });
                 }
                 const currentBaseName = loaderFile.replace(".loader.js", "");
 
                 // Rename build files to match the provided projectId if necessary.
                 if (currentBaseName !== projectId) {
                     renameBuildFiles(targetBuildFolder, projectId, currentBaseName);
-                    console.log(
-                        `Renamed build files from ${currentBaseName} to ${projectId}`
-                    );
                 }
 
-                // Decompress files in the Build folder.
+                // Decompress any compressed files in the Build folder.
                 decompressFilesInFolder(targetBuildFolder)
                     .then(() => {
+                        // Construct the new game object, adding uploadDate and moduleCode.
                         const newGame = {
                             id: projectId,
                             title,
                             author,
+                            moduleCode: moduleCode || "",  // new field; if not provided, default to empty string
+                            uploadDate: new Date().toISOString(),  // new field set at upload time
                             thumbnail: `/builds/${projectId}/thumbnail.png`,
                             build: {
                                 loaderUrl: `/builds/${projectId}/Build/${projectId}.loader.js`,
                                 dataUrl: `/builds/${projectId}/Build/${projectId}.data`,
                                 frameworkUrl: `/builds/${projectId}/Build/${projectId}.framework.js`,
-                                codeUrl: `/builds/${projectId}/Build/${projectId}.wasm`,
-                            },
+                                codeUrl: `/builds/${projectId}/Build/${projectId}.wasm`
+                            }
                         };
 
                         games.push(newGame);
 
-                        fs.writeFile(
-                            gamesJsonPath,
-                            JSON.stringify(games, null, 2),
-                            (err) => {
-                                if (err) {
-                                    return res
-                                        .status(500)
-                                        .json({ error: "Error updating games.json" });
-                                }
-                                // Remove the uploaded ZIP file.
-                                fs.unlink(zipFile.path, () => { });
-                                res.json({ success: true, game: newGame });
+                        fs.writeFile(gamesJsonPath, JSON.stringify(games, null, 2), (err) => {
+                            if (err) {
+                                return res.status(500).json({ error: "Error updating games.json" });
                             }
-                        );
+                            // Remove the uploaded ZIP file after extraction.
+                            fs.unlink(zipFile.path, () => { });
+                            res.json({ success: true, game: newGame });
+                        });
                     })
                     .catch((err) => {
-                        console.error("Error decompressing files:", err);
                         res.status(500).json({ error: "Error decompressing build files" });
                     });
             })
             .on("error", (err) => {
-                res.status(500).json({
-                    error: "Error extracting zip file",
-                    details: err.message,
-                });
+                res.status(500).json({ error: "Error extracting zip file", details: err.message });
             });
     }
 );

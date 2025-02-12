@@ -3,6 +3,8 @@
     "id": "TypingTower",
     "title": "Typing Tower",
     "author": "Ignacy Dziakola",
+    "moduleCode": "MOD008153",
+    "uploadDate": "2024-12-21T18:52:45.492Z",
     "thumbnail": "/builds/TypingTower/thumbnail.png",
     "build": {
       "loaderUrl": "/builds/TypingTower/Build/TypingTower.loader.js",
@@ -15,6 +17,8 @@
     "id": "WordArchitect",
     "title": "Word Architect",
     "author": "Ignacy Dziakola",
+    "moduleCode": "MOD008153",
+    "uploadDate": "2025-02-11T15:06:22.492Z",
     "thumbnail": "/builds/WordArchitect/thumbnail.png",
     "build": {
       "loaderUrl": "/builds/WordArchitect/Build/WordArchitect.loader.js",
@@ -27,6 +31,8 @@
     "id": "WordontheStreet",
     "title": "Word on the Street",
     "author": "Paul Mould",
+    "moduleCode": "MOD008153",
+    "uploadDate": "2025-02-06T17:01:45.492Z",
     "thumbnail": "/builds/WordontheStreet/thumbnail.png",
     "build": {
       "loaderUrl": "/builds/WordontheStreet/Build/WordontheStreet.loader.js",
@@ -39,6 +45,8 @@
     "id": "WordFight",
     "title": "Word Fight",
     "author": "Jess Woodward",
+    "moduleCode": "MOD008153",
+    "uploadDate": "2025-02-11T15:06:45.492Z",
     "thumbnail": "/builds/WordFight/thumbnail.png",
     "build": {
       "loaderUrl": "/builds/WordFight/Build/WordFight.loader.js",
@@ -51,6 +59,8 @@
     "id": "WordWorm",
     "title": "WormWord",
     "author": "Don MacSween",
+    "moduleCode": "MOD008153",
+    "uploadDate": "2025-02-11T13:17:45.492Z",
     "thumbnail": "/builds/WordWorm/thumbnail.png",
     "build": {
       "loaderUrl": "/builds/WordWorm/Build/WordWorm.loader.js",
@@ -63,12 +73,28 @@
     "id": "TowerDefense",
     "title": "Fantasy Tower Defense",
     "author": "Dan Burciu",
+    "moduleCode": "MOD008149",
+    "uploadDate": "2025-02-11T15:06:10.492Z",
     "thumbnail": "/builds/TowerDefense/thumbnail.png",
     "build": {
       "loaderUrl": "/builds/TowerDefense/Build/WebGL Builds.loader.js",
       "dataUrl": "/builds/TowerDefense/Build/WebGL Builds.data",
       "frameworkUrl": "/builds/TowerDefense/Build/WebGL Builds.framework.js",
       "codeUrl": "/builds/TowerDefense/Build/WebGL Builds.wasm"
+    }
+  },
+  {
+    "id": "WordRun",
+    "title": "Word Run",
+    "author": "Jamie",
+    "moduleCode": "MOD008153",
+    "uploadDate": "2025-02-12T19:18:40.834Z",
+    "thumbnail": "/builds/WordRun/thumbnail.png",
+    "build": {
+      "loaderUrl": "/builds/WordRun/Build/WordRun.loader.js",
+      "dataUrl": "/builds/WordRun/Build/WordRun.data",
+      "frameworkUrl": "/builds/WordRun/Build/WordRun.framework.js",
+      "codeUrl": "/builds/WordRun/Build/WordRun.wasm"
     }
   }
 ]
