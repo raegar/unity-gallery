@@ -10,6 +10,7 @@ function UploadGame() {
     const [uploadStatus, setUploadStatus] = useState("");
     const [useGitHub, setUseGitHub] = useState(false);
     const [gitHubUrl, setGitHubUrl] = useState("");
+    const [assetName, setAssetName] = useState("");
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -38,8 +39,8 @@ function UploadGame() {
                     return;
                 }
 
-                // Extract owner and repo from the provided GitHub repository URL
-                const match = gitHubUrl.match(/https:\/\/github\.com\/([^/]+)\/([^/]+)\/?$/);
+                // Extract owner and repo from the provided GitHub repository URL.
+                const match = gitHubUrl.match(/https:\/\/github\.com\/([^\/]+)\/([^\/]+)\/?$/);
                 if (!match) {
                     setUploadStatus("Invalid GitHub repository URL.");
                     return;
@@ -47,17 +48,31 @@ function UploadGame() {
                 const owner = match[1];
                 const repo = match[2];
 
-                // Construct the proxy URL; note the route uses 'latest' as a literal.
-                const proxyUrl = `http://localhost:3001/proxy/github/${owner}/${repo}/latest`;
+                // Fetch the latest release information from GitHub.
+                const releaseResponse = await fetch(
+                    `https://api.github.com/repos/${owner}/${repo}/releases/latest`
+                );
+                if (!releaseResponse.ok) {
+                    setUploadStatus("Failed to fetch the latest release from GitHub.");
+                    return;
+                }
+                const releaseData = await releaseResponse.json();
+                const tag = releaseData.tag_name; // e.g., "v0.0.1"
 
-                // Fetch the ZIP file via the proxy
+                // Construct the proxy URL. If assetName is provided, append it.
+                let proxyUrl = `http://localhost:3001/proxy/github/${owner}/${repo}/${tag}`;
+                if (assetName.trim() !== "") {
+                    proxyUrl += `/${assetName.trim()}`;
+                }
+
+                // Fetch the ZIP file via the proxy.
                 const zipResponse = await fetch(proxyUrl);
                 if (!zipResponse.ok) {
                     setUploadStatus("Failed to download the ZIP file from the proxy.");
                     return;
                 }
                 const zipBlob = await zipResponse.blob();
-                const zipFileFromGitHub = new File([zipBlob], `${repo}.zip`, {
+                const zipFileFromGitHub = new File([zipBlob], assetName.trim() || `${repo}-${tag}.zip`, {
                     type: "application/zip",
                 });
                 formData.append("zipfile", zipFileFromGitHub);
@@ -84,6 +99,7 @@ function UploadGame() {
             setUploadStatus("Upload error: " + error.message);
         }
     };
+
 
     return (
         <div style={{ maxWidth: "600px", margin: "2rem auto", padding: "1rem", background: "#f2f3f6", borderRadius: "8px" }}>
@@ -120,18 +136,32 @@ function UploadGame() {
                 </div>
 
                 {useGitHub ? (
-                    <div style={{ marginBottom: "1rem" }}>
-                        <label>
-                            GitHub Repository URL:
-                            <input
-                                type="url"
-                                value={gitHubUrl}
-                                onChange={(e) => setGitHubUrl(e.target.value)}
-                                required
-                                style={{ width: "100%" }}
-                            />
-                        </label>
-                    </div>
+                    <>
+                        <div style={{ marginBottom: "1rem" }}>
+                            <label>
+                                GitHub Repository URL:
+                                <input
+                                    type="url"
+                                    value={gitHubUrl}
+                                    onChange={(e) => setGitHubUrl(e.target.value)}
+                                    required
+                                    style={{ width: "100%" }}
+                                />
+                            </label>
+                        </div>
+                        <div style={{ marginBottom: "1rem" }}>
+                            <label>
+                                Asset Name (optional):
+                                <input
+                                    type="text"
+                                    value={assetName}
+                                    onChange={(e) => setAssetName(e.target.value)}
+                                    placeholder="e.g., LetterRun-webgl.zip"
+                                    style={{ width: "100%" }}
+                                />
+                            </label>
+                        </div>
+                    </>
                 ) : (
                     <div style={{ marginBottom: "1rem" }}>
                         <label>
@@ -145,6 +175,7 @@ function UploadGame() {
                         </label>
                     </div>
                 )}
+
 
                 <div style={{ marginBottom: "1rem" }}>
                     <label>

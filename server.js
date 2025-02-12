@@ -303,30 +303,22 @@ app.delete("/games/:id", (req, res) => {
 
 
 // Proxy route to fetch GitHub release asset
-app.get('/proxy/github/:owner/:repo/latest', async (req, res) => {
-    const { owner, repo } = req.params;
+app.get('/proxy/github/:owner/:repo/:tag/:assetName?', async (req, res) => {
+    const { owner, repo, tag, assetName } = req.params;
+    // Use the provided assetName if it exists and is not empty, otherwise default.
+    const fileName = assetName && assetName.trim() !== "" ? assetName : `${repo}-${tag}.zip`;
+    const assetUrl = `https://github.com/${owner}/${repo}/releases/download/${tag}/${fileName}`;
+
     try {
-        // First, get the latest release info from GitHub API
-        const releaseResponse = await axios.get(`https://api.github.com/repos/${owner}/${repo}/releases/latest`);
-        const releaseData = releaseResponse.data;
-        const tag = releaseData.tag_name; // e.g. "v0.0.1"
-
-        // Construct the asset URL using the tag from the release info.
-        // Note: This assumes your asset is named in the format: `${repo}-${tag}.zip`
-        // Adjust if your naming convention differs.
-        const assetUrl = `https://github.com/${owner}/${repo}/releases/download/${tag}/${repo}-${tag}.zip`;
-
-        // Fetch the asset from GitHub
-        const assetResponse = await axios({
+        const response = await axios({
             url: assetUrl,
             method: 'GET',
             responseType: 'stream',
         });
-
-        // Set headers and pipe the response
-        res.setHeader('Content-Disposition', `attachment; filename=${repo}-${tag}.zip`);
+        // Set headers so the file is downloaded properly.
+        res.setHeader('Content-Disposition', `attachment; filename=${fileName}`);
         res.setHeader('Content-Type', 'application/zip');
-        assetResponse.data.pipe(res);
+        response.data.pipe(res);
     } catch (error) {
         console.error('Error fetching GitHub asset:', error.message);
         res.status(500).json({ error: 'Failed to fetch GitHub asset.' });
