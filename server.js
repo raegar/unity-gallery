@@ -273,7 +273,8 @@ app.post(
 // Update game metadata endpoint.
 app.put("/games/:id", (req, res) => {
     const projectId = req.params.id;
-    const { title, author } = req.body;
+    // Include moduleCode and uploadDate in addition to title and author.
+    const { title, author, moduleCode, uploadDate } = req.body;
     const gamesJsonPath = path.join(__dirname, "public", "games.json");
 
     let games = [];
@@ -283,13 +284,18 @@ app.put("/games/:id", (req, res) => {
         return res.status(500).json({ error: "Error reading games.json" });
     }
 
-    const gameIndex = games.findIndex((game) => game.id === projectId);
+    const gameIndex = games.findIndex(game => game.id === projectId);
     if (gameIndex === -1) {
         return res.status(404).json({ error: "Game not found" });
     }
 
+    // Update the metadata with the new fields.
     if (title) games[gameIndex].title = title;
     if (author) games[gameIndex].author = author;
+    // Update moduleCode (if provided, even if an empty string is acceptable to clear it)
+    if (moduleCode !== undefined) games[gameIndex].moduleCode = moduleCode;
+    // Update uploadDate (if provided)
+    if (uploadDate) games[gameIndex].uploadDate = uploadDate;
 
     fs.writeFile(gamesJsonPath, JSON.stringify(games, null, 2), (err) => {
         if (err) {
@@ -298,6 +304,7 @@ app.put("/games/:id", (req, res) => {
         res.json({ success: true, game: games[gameIndex] });
     });
 });
+
 
 // Update thumbnail endpoint.
 app.put("/games/:id/thumbnail", upload.single("thumbnail"), (req, res) => {

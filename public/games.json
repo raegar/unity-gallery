@@ -84,17 +84,17 @@
     }
   },
   {
-    "id": "WordRun",
-    "title": "Word Run",
-    "author": "Jamie",
-    "moduleCode": "MOD008153",
-    "uploadDate": "2025-02-12T19:18:40.834Z",
-    "thumbnail": "/builds/WordRun/thumbnail.png",
+    "id": "LetterRun",
+    "title": "Letter Run",
+    "author": "Jamie Myland",
+    "moduleCode": "MOD001112",
+    "uploadDate": "2025-02-11",
+    "thumbnail": "/builds/LetterRun/thumbnail.png",
     "build": {
-      "loaderUrl": "/builds/WordRun/Build/WordRun.loader.js",
-      "dataUrl": "/builds/WordRun/Build/WordRun.data",
-      "frameworkUrl": "/builds/WordRun/Build/WordRun.framework.js",
-      "codeUrl": "/builds/WordRun/Build/WordRun.wasm"
+      "loaderUrl": "/builds/LetterRun/Build/LetterRun.loader.js",
+      "dataUrl": "/builds/LetterRun/Build/LetterRun.data",
+      "frameworkUrl": "/builds/LetterRun/Build/LetterRun.framework.js",
+      "codeUrl": "/builds/LetterRun/Build/LetterRun.wasm"
     }
   }
 ]
