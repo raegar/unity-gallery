@@ -1,4 +1,3 @@
-// src/UploadGame.js
 import React, { useState } from "react";
 
 function UploadGame() {
@@ -6,34 +5,70 @@ function UploadGame() {
     const [author, setAuthor] = useState("");
     const [projectId, setProjectId] = useState("");
     const [zipFile, setZipFile] = useState(null);
-    const [thumbnail, setThumbnail] = useState(null); // new state for thumbnail
+    const [thumbnail, setThumbnail] = useState(null);
     const [overwrite, setOverwrite] = useState(false);
     const [uploadStatus, setUploadStatus] = useState("");
     const [useGitHub, setUseGitHub] = useState(false);
     const [gitHubUrl, setGitHubUrl] = useState("");
 
-
     const handleSubmit = async (e) => {
         e.preventDefault();
-        if (!zipFile || !title || !author || !projectId) {
-            setUploadStatus("Please fill in all required fields and select a ZIP file.");
+
+        if (!title || !author || !projectId) {
+            setUploadStatus("Please fill in all required fields.");
             return;
         }
-        setUploadStatus("Uploading...");
+
+        setUploadStatus("Processing...");
 
         const formData = new FormData();
-        formData.append("zipfile", zipFile);
         formData.append("title", title);
         formData.append("author", author);
         formData.append("projectId", projectId);
         formData.append("overwrite", overwrite ? "true" : "false");
 
-        // If a thumbnail was selected, append it.
         if (thumbnail) {
             formData.append("thumbnail", thumbnail);
         }
 
         try {
+            if (useGitHub) {
+                if (!gitHubUrl) {
+                    setUploadStatus("Please provide a valid GitHub repository URL.");
+                    return;
+                }
+
+                // Extract owner and repo from the provided GitHub repository URL
+                const match = gitHubUrl.match(/https:\/\/github\.com\/([^/]+)\/([^/]+)\/?$/);
+                if (!match) {
+                    setUploadStatus("Invalid GitHub repository URL.");
+                    return;
+                }
+                const owner = match[1];
+                const repo = match[2];
+
+                // Construct the proxy URL; note the route uses 'latest' as a literal.
+                const proxyUrl = `http://localhost:3001/proxy/github/${owner}/${repo}/latest`;
+
+                // Fetch the ZIP file via the proxy
+                const zipResponse = await fetch(proxyUrl);
+                if (!zipResponse.ok) {
+                    setUploadStatus("Failed to download the ZIP file from the proxy.");
+                    return;
+                }
+                const zipBlob = await zipResponse.blob();
+                const zipFileFromGitHub = new File([zipBlob], `${repo}.zip`, {
+                    type: "application/zip",
+                });
+                formData.append("zipfile", zipFileFromGitHub);
+            } else {
+                if (!zipFile) {
+                    setUploadStatus("Please select a ZIP file to upload.");
+                    return;
+                }
+                formData.append("zipfile", zipFile);
+            }
+
             const response = await fetch("/upload", {
                 method: "POST",
                 body: formData,
@@ -54,7 +89,24 @@ function UploadGame() {
         <div style={{ maxWidth: "600px", margin: "2rem auto", padding: "1rem", background: "#f2f3f6", borderRadius: "8px" }}>
             <h2>Upload a New Game</h2>
             <form onSubmit={handleSubmit}>
-                {/* Other input fields for title, author, projectId, etc. */}
+                <div style={{ marginBottom: "1rem" }}>
+                    <label>
+                        Title:
+                        <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} required style={{ width: "100%" }} />
+                    </label>
+                </div>
+                <div style={{ marginBottom: "1rem" }}>
+                    <label>
+                        Author:
+                        <input type="text" value={author} onChange={(e) => setAuthor(e.target.value)} required style={{ width: "100%" }} />
+                    </label>
+                </div>
+                <div style={{ marginBottom: "1rem" }}>
+                    <label>
+                        Project ID:
+                        <input type="text" value={projectId} onChange={(e) => setProjectId(e.target.value)} required style={{ width: "100%" }} />
+                    </label>
+                </div>
 
                 <div style={{ marginBottom: "1rem" }}>
                     <label>
@@ -94,8 +146,18 @@ function UploadGame() {
                     </div>
                 )}
 
-                {/* Thumbnail and other fields */}
-
+                <div style={{ marginBottom: "1rem" }}>
+                    <label>
+                        Thumbnail (640x480 recommended):
+                        <input type="file" accept="image/*" onChange={(e) => setThumbnail(e.target.files[0])} />
+                    </label>
+                </div>
+                <div style={{ marginBottom: "1rem" }}>
+                    <label>
+                        Overwrite if exists:
+                        <input type="checkbox" checked={overwrite} onChange={(e) => setOverwrite(e.target.checked)} />
+                    </label>
+                </div>
                 <button
                     type="submit"
                     style={{
@@ -109,7 +171,6 @@ function UploadGame() {
                     Upload Game
                 </button>
             </form>
-
             {uploadStatus && <p style={{ marginTop: "1rem" }}>{uploadStatus}</p>}
         </div>
     );
