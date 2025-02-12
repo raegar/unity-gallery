@@ -6,6 +6,27 @@ body {
   /* Neutral Grey */
 }
 
+.thumbnail-container {
+  position: relative;
+}
+
+.edit-icon {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: rgba(0, 0, 0, 0.6);
+  padding: 4px;
+  border-radius: 50%;
+  color: #fff;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.edit-icon:hover {
+  background: rgba(0, 0, 0, 0.8);
+}
+
+
 .gallery-page {
   max-width: 1200px;
   margin: 0 auto;
