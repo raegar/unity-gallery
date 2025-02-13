@@ -112,16 +112,48 @@ app.use(express.urlencoded({ extended: true }));
 // Proxy route for GitHub assets
 app.get("/proxy/github/:owner/:repo/:tag/:assetName?", async (req, res) => {
     const { owner, repo, tag, assetName } = req.params;
-    const fileName =
-        assetName && assetName.trim() !== "" ? assetName : `${repo}-${tag}.zip`;
-    const assetUrl = `https://github.com/${owner}/${repo}/releases/download/${tag}/${fileName}`;
+    let assetUrl = "";
+
+    if (assetName && assetName.trim() !== "") {
+        try {
+            // Fetch release data for the given tag
+            const releaseResponse = await axios.get(
+                `https://api.github.com/repos/${owner}/${repo}/releases/tags/${tag}`
+            );
+            const releaseData = releaseResponse.data;
+            // Find the asset matching the provided name
+            const asset = releaseData.assets.find(
+                (a) => a.name === assetName.trim()
+            );
+            if (!asset) {
+                return res
+                    .status(404)
+                    .json({ error: "Asset not found in the release." });
+            }
+            assetUrl = asset.browser_download_url;
+        } catch (error) {
+            console.error("Error fetching release data:", error.message);
+            return res
+                .status(500)
+                .json({ error: "Error fetching release data from GitHub." });
+        }
+    } else {
+        // Fallback to default naming convention if no assetName is provided
+        const fileName = `${repo}-${tag}.zip`;
+        assetUrl = `https://github.com/${owner}/${repo}/releases/download/${tag}/${fileName}`;
+    }
+
     try {
         const response = await axios({
             url: assetUrl,
             method: "GET",
             responseType: "stream",
         });
-        res.setHeader("Content-Disposition", `attachment; filename=${fileName}`);
+        const downloadFileName =
+            assetName && assetName.trim() !== ""
+                ? assetName.trim()
+                : `${repo}-${tag}.zip`;
+        res.setHeader("Content-Disposition", `attachment; filename=${downloadFileName}`);
         res.setHeader("Content-Type", "application/zip");
         response.data.pipe(res);
     } catch (error) {

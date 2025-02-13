@@ -14,20 +14,16 @@ function UploadGame() {
     const [gitHubUrl, setGitHubUrl] = useState("");
     const [assetName, setAssetName] = useState("");
 
-
-    // When the Title changes, update the title state and, if the user hasn't manually changed projectId,
-    // auto-generate it by stripping spaces.
+    // Auto-generate Project ID unless manually modified
     const handleTitleChange = (e) => {
         const newTitle = e.target.value;
         setTitle(newTitle);
         if (!projectIdManuallyChanged) {
-            // Simple normalization: remove spaces. You might choose to also lowercase, remove punctuation, etc.
             const newProjectId = newTitle.replace(/\s+/g, "");
             setProjectId(newProjectId);
         }
     };
 
-    // When the Project ID field is changed manually, update state and set a flag
     const handleProjectIdChange = (e) => {
         setProjectId(e.target.value);
         setProjectIdManuallyChanged(true);
@@ -48,10 +44,8 @@ function UploadGame() {
         formData.append("author", author);
         formData.append("projectId", projectId);
         formData.append("overwrite", overwrite ? "true" : "false");
-
-        if (thumbnail) {
-            formData.append("thumbnail", thumbnail);
-        }
+        if (moduleCode) formData.append("moduleCode", moduleCode);
+        if (thumbnail) formData.append("thumbnail", thumbnail);
 
         try {
             if (useGitHub) {
@@ -60,7 +54,7 @@ function UploadGame() {
                     return;
                 }
 
-                // Extract owner and repo from the provided GitHub repository URL.
+                // Extract owner and repo from the provided GitHub URL.
                 const match = gitHubUrl.match(/https:\/\/github\.com\/([^/]+)\/([^/]+)\/?$/);
                 if (!match) {
                     setUploadStatus("Invalid GitHub repository URL.");
@@ -69,15 +63,32 @@ function UploadGame() {
                 const owner = match[1];
                 const repo = match[2];
 
-                // Fetch the latest release information from GitHub.
-                const releaseResponse = await fetch(
+                let releaseData;
+                // Try to fetch the latest (stable) release.
+                let releaseResponse = await fetch(
                     `https://api.github.com/repos/${owner}/${repo}/releases/latest`
                 );
+
                 if (!releaseResponse.ok) {
-                    setUploadStatus("Failed to fetch the latest release from GitHub.");
-                    return;
+                    // If no stable release is available, fetch all releases and pick the first pre‑release.
+                    const releasesResponse = await fetch(
+                        `https://api.github.com/repos/${owner}/${repo}/releases`
+                    );
+                    if (!releasesResponse.ok) {
+                        setUploadStatus("Failed to fetch releases from GitHub.");
+                        return;
+                    }
+                    const releases = await releasesResponse.json();
+                    const preRelease = releases.find((release) => release.prerelease);
+                    if (!preRelease) {
+                        setUploadStatus("No stable release or pre-release found on GitHub.");
+                        return;
+                    }
+                    releaseData = preRelease;
+                } else {
+                    releaseData = await releaseResponse.json();
                 }
-                const releaseData = await releaseResponse.json();
+
                 const tag = releaseData.tag_name; // e.g., "v0.0.1"
 
                 // Construct the proxy URL. If assetName is provided, append it.
@@ -93,9 +104,11 @@ function UploadGame() {
                     return;
                 }
                 const zipBlob = await zipResponse.blob();
-                const zipFileFromGitHub = new File([zipBlob], assetName.trim() || `${repo}-${tag}.zip`, {
-                    type: "application/zip",
-                });
+                const zipFileFromGitHub = new File(
+                    [zipBlob],
+                    assetName.trim() || `${repo}-${tag}.zip`,
+                    { type: "application/zip" }
+                );
                 formData.append("zipfile", zipFileFromGitHub);
             } else {
                 if (!zipFile) {
@@ -120,7 +133,6 @@ function UploadGame() {
             setUploadStatus("Upload error: " + error.message);
         }
     };
-
 
     return (
         <div style={{ maxWidth: "600px", margin: "2rem auto", padding: "1rem", background: "#f2f3f6", borderRadius: "8px" }}>
@@ -206,7 +218,7 @@ function UploadGame() {
                                     type="text"
                                     value={assetName}
                                     onChange={(e) => setAssetName(e.target.value)}
-                                    placeholder="e.g., LetterRun-webgl.zip"
+                                    placeholder="e.g., WordFight.zip"
                                     style={{ width: "100%" }}
                                 />
                             </label>
@@ -225,7 +237,6 @@ function UploadGame() {
                         </label>
                     </div>
                 )}
-
 
                 <div style={{ marginBottom: "1rem" }}>
                     <label>

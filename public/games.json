@@ -12,5 +12,19 @@
       "frameworkUrl": "/builds/TypingTower/Build/TypingTower.framework.js",
       "codeUrl": "/builds/TypingTower/Build/TypingTower.wasm"
     }
+  },
+  {
+    "id": "LetterRun",
+    "title": "Letter Run",
+    "author": "JBM",
+    "moduleCode": "",
+    "uploadDate": "2025-02-13T20:14:09.282Z",
+    "thumbnail": "/builds/LetterRun/thumbnail.png",
+    "build": {
+      "loaderUrl": "/builds/LetterRun/Build/LetterRun.loader.js",
+      "dataUrl": "/builds/LetterRun/Build/LetterRun.data",
+      "frameworkUrl": "/builds/LetterRun/Build/LetterRun.framework.js",
+      "codeUrl": "/builds/LetterRun/Build/LetterRun.wasm"
+    }
   }
 ]
