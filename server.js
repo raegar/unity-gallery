@@ -1,12 +1,14 @@
 // server.js
 const express = require("express");
-const axios = require('axios');
+const axios = require("axios");
 const multer = require("multer");
 const unzipper = require("unzipper");
 const fs = require("fs");
 const path = require("path");
 const zlib = require("zlib");
+const cors = require("cors");
 
+// Helper function: decompress a file
 const decompressFile = (filePath, extension) => {
     return new Promise((resolve, reject) => {
         // Remove the extension (.gz or .br) from the filename to get the target name.
@@ -14,9 +16,10 @@ const decompressFile = (filePath, extension) => {
         const readStream = fs.createReadStream(filePath);
         const writeStream = fs.createWriteStream(newFilePath);
         // Choose the correct decompression stream based on the extension.
-        const decompress = extension === ".gz"
-            ? zlib.createGunzip()
-            : zlib.createBrotliDecompress();
+        const decompress =
+            extension === ".gz"
+                ? zlib.createGunzip()
+                : zlib.createBrotliDecompress();
 
         readStream
             .pipe(decompress)
@@ -30,11 +33,11 @@ const decompressFile = (filePath, extension) => {
     });
 };
 
+// Helper function: decompress all files in a folder
 const decompressFilesInFolder = (folderPath) => {
     return new Promise((resolve, reject) => {
         fs.readdir(folderPath, (err, files) => {
             if (err) return reject(err);
-            // Create an array of promises for each decompression operation.
             const decompressPromises = files.map((file) => {
                 const filePath = path.join(folderPath, file);
                 if (file.endsWith(".gz")) {
@@ -50,16 +53,15 @@ const decompressFilesInFolder = (folderPath) => {
     });
 };
 
+// Helper function: recursively find the "Build" folder
 function findBuildFolder(dir) {
     const items = fs.readdirSync(dir);
-    // Check if any of the items is named "Build" and is a directory
     if (items.includes("Build")) {
         const potential = path.join(dir, "Build");
         if (fs.statSync(potential).isDirectory()) {
             return potential;
         }
     }
-    // Recursively search in subdirectories
     for (const item of items) {
         const fullPath = path.join(dir, item);
         if (fs.statSync(fullPath).isDirectory()) {
@@ -72,154 +74,207 @@ function findBuildFolder(dir) {
     return null;
 }
 
+// Helper function: rename build files in a folder
+const renameBuildFiles = (buildFolder, projectId, currentBaseName) => {
+    const extensions = [".loader.js", ".data", ".framework.js", ".wasm"];
+    extensions.forEach((ext) => {
+        const oldFilePath = path.join(buildFolder, `${currentBaseName}${ext}`);
+        const newFilePath = path.join(buildFolder, `${projectId}${ext}`);
+        if (fs.existsSync(oldFilePath)) {
+            fs.renameSync(oldFilePath, newFilePath);
+        }
+    });
+};
+
 const app = express();
 
-// Configure multer to handle multiple fields
+// Configure multer for file uploads
 const upload = multer({ dest: "uploads/" });
 
-const cors = require('cors');
+// Enable CORS
 app.use(cors());
 
-
-// Serve static files from the builds folder with cache-control headers for thumbnails.
-app.use('/builds', express.static(path.join(__dirname, 'public', 'builds'), {
-    setHeaders: (res, filePath) => {
-        if (filePath.endsWith('thumbnail.png')) {
-            res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-        }
-    }
-}));
+// Serve static files from public/builds with cache-control headers for thumbnails.
+app.use(
+    "/builds",
+    express.static(path.join(__dirname, "public", "builds"), {
+        setHeaders: (res, filePath) => {
+            if (filePath.endsWith("thumbnail.png")) {
+                res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
+            }
+        },
+    })
+);
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-app.post("/upload", upload.fields([
-    { name: "zipfile", maxCount: 1 },
-    { name: "thumbnail", maxCount: 1 }
-]), (req, res) => {
-    const { title, author, projectId, overwrite } = req.body;
-    // Retrieve files from req.files
-    const zipFile = req.files["zipfile"] ? req.files["zipfile"][0] : null;
-    const thumbnailFile = req.files["thumbnail"] ? req.files["thumbnail"][0] : null;
-
-    if (!zipFile || !title || !author || !projectId) {
-        return res.status(400).json({ error: "Missing required fields or files." });
-    }
-
-    const extractDir = path.join(__dirname, "public", "builds", projectId);
-    const gamesJsonPath = path.join(__dirname, "public", "games.json");
-
-    // Read current games.json (or use an empty array if not available)
-    let games = [];
+// Proxy route for GitHub assets
+app.get("/proxy/github/:owner/:repo/:tag/:assetName?", async (req, res) => {
+    const { owner, repo, tag, assetName } = req.params;
+    const fileName =
+        assetName && assetName.trim() !== "" ? assetName : `${repo}-${tag}.zip`;
+    const assetUrl = `https://github.com/${owner}/${repo}/releases/download/${tag}/${fileName}`;
     try {
-        games = JSON.parse(fs.readFileSync(gamesJsonPath, "utf8"));
-    } catch (err) {
-        games = [];
-    }
-
-    const folderExists = fs.existsSync(extractDir);
-    const gameIndex = games.findIndex(game => game.id === projectId);
-
-    if ((folderExists || gameIndex !== -1) && overwrite !== "true") {
-        return res.status(400).json({
-            error: "A game with that project ID already exists. Set overwrite=true to replace it."
+        const response = await axios({
+            url: assetUrl,
+            method: "GET",
+            responseType: "stream",
         });
+        res.setHeader("Content-Disposition", `attachment; filename=${fileName}`);
+        res.setHeader("Content-Type", "application/zip");
+        response.data.pipe(res);
+    } catch (error) {
+        console.error("Error fetching GitHub asset:", error.message);
+        res.status(500).json({ error: "Failed to fetch GitHub asset." });
     }
-
-    // If overwrite is requested, remove the existing folder and JSON entry if they exist.
-    if (folderExists && overwrite === "true") {
-        try {
-            fs.rmSync(extractDir, { recursive: true, force: true });
-        } catch (err) {
-            console.error("Error deleting existing folder:", err);
-            return res.status(500).json({ error: "Error deleting existing project folder." });
-        }
-    }
-    if (gameIndex !== -1 && overwrite === "true") {
-        games.splice(gameIndex, 1);
-    }
-
-    // Create the extraction directory
-    fs.mkdirSync(extractDir, { recursive: true });
-
-    // Process the thumbnail if provided
-    if (thumbnailFile) {
-        // Define destination path for thumbnail (e.g., "thumbnail.png")
-        const thumbDest = path.join(extractDir, "thumbnail.png");
-        // Move the file from the temporary folder to the destination.
-        try {
-            fs.renameSync(thumbnailFile.path, thumbDest);
-        } catch (err) {
-            console.error("Error moving thumbnail file:", err);
-            return res.status(500).json({ error: "Error processing thumbnail." });
-        }
-    }
-
-    // Extract the ZIP file into the designated folder
-    fs.createReadStream(zipFile.path)
-        .pipe(unzipper.Extract({ path: extractDir }))
-        .on("close", () => {
-            // Find the Build folder recursively in the extracted directory
-            let foundBuildFolder = findBuildFolder(extractDir);
-            if (!foundBuildFolder) {
-                return res.status(500).json({ error: "Build folder not found in the uploaded ZIP." });
-            }
-
-            const targetBuildFolder = path.join(extractDir, "Build");
-
-            // If the found Build folder isn't already at the target, move it there.
-            if (foundBuildFolder !== targetBuildFolder) {
-                try {
-                    fs.renameSync(foundBuildFolder, targetBuildFolder);
-                    console.log("Moved Build folder to target location:", targetBuildFolder);
-                } catch (err) {
-                    console.error("Error moving Build folder:", err);
-                    return res.status(500).json({ error: "Error relocating Build folder." });
-                }
-            }
-
-            // Now targetBuildFolder is the Build folder to use.
-            // Decompress any compressed files in the Build folder.
-            decompressFilesInFolder(targetBuildFolder)
-                .then(() => {
-                    // All compressed files have been decompressed.
-                    const newGame = {
-                        id: projectId,
-                        title,
-                        author,
-                        thumbnail: `/builds/${projectId}/thumbnail.png`,
-                        build: {
-                            loaderUrl: `/builds/${projectId}/Build/${projectId}.loader.js`,
-                            dataUrl: `/builds/${projectId}/Build/${projectId}.data`,
-                            frameworkUrl: `/builds/${projectId}/Build/${projectId}.framework.js`,
-                            codeUrl: `/builds/${projectId}/Build/${projectId}.wasm`
-                        }
-                    };
-
-                    games.push(newGame);
-
-                    fs.writeFile(gamesJsonPath, JSON.stringify(games, null, 2), (err) => {
-                        if (err) {
-                            return res.status(500).json({ error: "Error updating games.json" });
-                        }
-                        // Remove the uploaded ZIP file after extraction.
-                        fs.unlink(zipFile.path, () => { });
-                        res.json({ success: true, game: newGame });
-                    });
-                })
-                .catch((err) => {
-                    console.error("Error decompressing files:", err);
-                    res.status(500).json({ error: "Error decompressing build files" });
-                });
-        })
-        .on("error", (err) => {
-            res.status(500).json({ error: "Error extracting zip file", details: err.message });
-        });
 });
 
+// Upload endpoint
+app.post(
+    "/upload",
+    upload.fields([
+        { name: "zipfile", maxCount: 1 },
+        { name: "thumbnail", maxCount: 1 },
+    ]),
+    (req, res) => {
+        const { title, author, projectId, overwrite, moduleCode } = req.body;
+        const zipFile = req.files["zipfile"] ? req.files["zipfile"][0] : null;
+        const thumbnailFile = req.files["thumbnail"]
+            ? req.files["thumbnail"][0]
+            : null;
+
+        if (!zipFile || !title || !author || !projectId) {
+            return res
+                .status(400)
+                .json({ error: "Missing required fields or files." });
+        }
+
+        const extractDir = path.join(__dirname, "public", "builds", projectId);
+        const gamesJsonPath = path.join(__dirname, "public", "games.json");
+
+        let games = [];
+        try {
+            games = JSON.parse(fs.readFileSync(gamesJsonPath, "utf8"));
+        } catch (err) {
+            games = [];
+        }
+
+        const folderExists = fs.existsSync(extractDir);
+        const gameIndex = games.findIndex((game) => game.id === projectId);
+
+        if ((folderExists || gameIndex !== -1) && overwrite !== "true") {
+            return res.status(400).json({
+                error:
+                    "A game with that project ID already exists. Set overwrite=true to replace it.",
+            });
+        }
+
+        if (folderExists && overwrite === "true") {
+            try {
+                fs.rmSync(extractDir, { recursive: true, force: true });
+            } catch (err) {
+                console.error("Error deleting existing folder:", err);
+                return res
+                    .status(500)
+                    .json({ error: "Error deleting existing project folder." });
+            }
+        }
+        if (gameIndex !== -1 && overwrite === "true") {
+            games.splice(gameIndex, 1);
+        }
+
+        fs.mkdirSync(extractDir, { recursive: true });
+
+        // Process thumbnail if provided.
+        if (thumbnailFile) {
+            const thumbDest = path.join(extractDir, "thumbnail.png");
+            try {
+                fs.renameSync(thumbnailFile.path, thumbDest);
+            } catch (err) {
+                console.error("Error moving thumbnail file:", err);
+                return res
+                    .status(500)
+                    .json({ error: "Error processing thumbnail." });
+            }
+        }
+
+        // Extract the ZIP file.
+        fs.createReadStream(zipFile.path)
+            .pipe(unzipper.Extract({ path: extractDir }))
+            .on("close", () => {
+                // Find the Build folder and process as before…
+                let foundBuildFolder = findBuildFolder(extractDir);
+                if (!foundBuildFolder) {
+                    return res.status(500).json({ error: "Build folder not found in the uploaded ZIP." });
+                }
+                const targetBuildFolder = path.join(extractDir, "Build");
+                if (foundBuildFolder !== targetBuildFolder) {
+                    try {
+                        fs.renameSync(foundBuildFolder, targetBuildFolder);
+                    } catch (err) {
+                        return res.status(500).json({ error: "Error relocating Build folder." });
+                    }
+                }
+
+                // Determine current base name from the loader file.
+                const buildFiles = fs.readdirSync(targetBuildFolder);
+                const loaderFile = buildFiles.find((file) => file.endsWith(".loader.js"));
+                if (!loaderFile) {
+                    return res.status(500).json({ error: "Loader file not found in Build folder." });
+                }
+                const currentBaseName = loaderFile.replace(".loader.js", "");
+
+                // Rename build files to match the provided projectId if necessary.
+                if (currentBaseName !== projectId) {
+                    renameBuildFiles(targetBuildFolder, projectId, currentBaseName);
+                }
+
+                // Decompress any compressed files in the Build folder.
+                decompressFilesInFolder(targetBuildFolder)
+                    .then(() => {
+                        // Construct the new game object, adding uploadDate and moduleCode.
+                        const newGame = {
+                            id: projectId,
+                            title,
+                            author,
+                            moduleCode: moduleCode || "",  // new field; if not provided, default to empty string
+                            uploadDate: new Date().toISOString(),  // new field set at upload time
+                            thumbnail: `/builds/${projectId}/thumbnail.png`,
+                            build: {
+                                loaderUrl: `/builds/${projectId}/Build/${projectId}.loader.js`,
+                                dataUrl: `/builds/${projectId}/Build/${projectId}.data`,
+                                frameworkUrl: `/builds/${projectId}/Build/${projectId}.framework.js`,
+                                codeUrl: `/builds/${projectId}/Build/${projectId}.wasm`
+                            }
+                        };
+
+                        games.push(newGame);
+
+                        fs.writeFile(gamesJsonPath, JSON.stringify(games, null, 2), (err) => {
+                            if (err) {
+                                return res.status(500).json({ error: "Error updating games.json" });
+                            }
+                            // Remove the uploaded ZIP file after extraction.
+                            fs.unlink(zipFile.path, () => { });
+                            res.json({ success: true, game: newGame });
+                        });
+                    })
+                    .catch((err) => {
+                        res.status(500).json({ error: "Error decompressing build files" });
+                    });
+            })
+            .on("error", (err) => {
+                res.status(500).json({ error: "Error extracting zip file", details: err.message });
+            });
+    }
+);
+
+// Update game metadata endpoint.
 app.put("/games/:id", (req, res) => {
     const projectId = req.params.id;
-    const { title, author } = req.body; // Extend with any additional metadata fields if needed.
+    // Include moduleCode and uploadDate in addition to title and author.
+    const { title, author, moduleCode, uploadDate } = req.body;
     const gamesJsonPath = path.join(__dirname, "public", "games.json");
 
     let games = [];
@@ -234,10 +289,13 @@ app.put("/games/:id", (req, res) => {
         return res.status(404).json({ error: "Game not found" });
     }
 
-    // Update the metadata
+    // Update the metadata with the new fields.
     if (title) games[gameIndex].title = title;
     if (author) games[gameIndex].author = author;
-    // Add further fields as needed
+    // Update moduleCode (if provided, even if an empty string is acceptable to clear it)
+    if (moduleCode !== undefined) games[gameIndex].moduleCode = moduleCode;
+    // Update uploadDate (if provided)
+    if (uploadDate) games[gameIndex].uploadDate = uploadDate;
 
     fs.writeFile(gamesJsonPath, JSON.stringify(games, null, 2), (err) => {
         if (err) {
@@ -247,34 +305,30 @@ app.put("/games/:id", (req, res) => {
     });
 });
 
+
+// Update thumbnail endpoint.
 app.put("/games/:id/thumbnail", upload.single("thumbnail"), (req, res) => {
     const projectId = req.params.id;
     const thumbnailFile = req.file;
     if (!thumbnailFile) {
         return res.status(400).json({ error: "No thumbnail file provided." });
     }
-    // Define the destination for the new thumbnail.
     const thumbDest = path.join(__dirname, "public", "builds", projectId, "thumbnail.png");
-
     try {
-        // Replace the existing thumbnail (if any) by moving the new file.
         fs.renameSync(thumbnailFile.path, thumbDest);
     } catch (err) {
         console.error("Error moving thumbnail file:", err);
         return res.status(500).json({ error: "Error processing thumbnail." });
     }
-
-    // Optionally, you could update games.json here if you wanted to store a timestamp
-    // or other metadata. For our purposes, the thumbnail URL is fixed.
     res.json({ success: true, thumbnail: `/builds/${projectId}/thumbnail.png` });
 });
 
+// Delete game endpoint.
 app.delete("/games/:id", (req, res) => {
     const projectId = req.params.id;
     const extractDir = path.join(__dirname, "public", "builds", projectId);
     const gamesJsonPath = path.join(__dirname, "public", "games.json");
 
-    // Remove the project folder (if it exists)
     if (fs.existsSync(extractDir)) {
         try {
             fs.rmSync(extractDir, { recursive: true, force: true });
@@ -284,7 +338,6 @@ app.delete("/games/:id", (req, res) => {
         }
     }
 
-    // Update games.json: filter out the deleted game
     let games = [];
     try {
         games = JSON.parse(fs.readFileSync(gamesJsonPath, "utf8"));
@@ -292,7 +345,7 @@ app.delete("/games/:id", (req, res) => {
         return res.status(500).json({ error: "Error reading games.json" });
     }
 
-    const newGames = games.filter(game => game.id !== projectId);
+    const newGames = games.filter((game) => game.id !== projectId);
     fs.writeFile(gamesJsonPath, JSON.stringify(newGames, null, 2), (err) => {
         if (err) {
             return res.status(500).json({ error: "Error updating games.json" });
@@ -300,31 +353,6 @@ app.delete("/games/:id", (req, res) => {
         res.json({ success: true });
     });
 });
-
-
-// Proxy route to fetch GitHub release asset
-app.get('/proxy/github/:owner/:repo/:tag/:assetName?', async (req, res) => {
-    const { owner, repo, tag, assetName } = req.params;
-    // Use the provided assetName if it exists and is not empty, otherwise default.
-    const fileName = assetName && assetName.trim() !== "" ? assetName : `${repo}-${tag}.zip`;
-    const assetUrl = `https://github.com/${owner}/${repo}/releases/download/${tag}/${fileName}`;
-
-    try {
-        const response = await axios({
-            url: assetUrl,
-            method: 'GET',
-            responseType: 'stream',
-        });
-        // Set headers so the file is downloaded properly.
-        res.setHeader('Content-Disposition', `attachment; filename=${fileName}`);
-        res.setHeader('Content-Type', 'application/zip');
-        response.data.pipe(res);
-    } catch (error) {
-        console.error('Error fetching GitHub asset:', error.message);
-        res.status(500).json({ error: 'Failed to fetch GitHub asset.' });
-    }
-});
-
 
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

@@ -1,1 +1,16 @@
-[]
+[
+  {
+    "id": "TypingTower",
+    "title": "Typing Tower",
+    "author": "Ignacy",
+    "moduleCode": "",
+    "uploadDate": "2025-02-13T20:10:55.590Z",
+    "thumbnail": "/builds/TypingTower/thumbnail.png",
+    "build": {
+      "loaderUrl": "/builds/TypingTower/Build/TypingTower.loader.js",
+      "dataUrl": "/builds/TypingTower/Build/TypingTower.data",
+      "frameworkUrl": "/builds/TypingTower/Build/TypingTower.framework.js",
+      "codeUrl": "/builds/TypingTower/Build/TypingTower.wasm"
+    }
+  }
+]
