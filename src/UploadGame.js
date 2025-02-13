@@ -1,4 +1,3 @@
-// src/UploadGame.js
 import React, { useState } from "react";
 
 function UploadGame() {
@@ -185,6 +184,7 @@ function UploadGame() {
                         />
                     </label>
                 </div>
+
                 {useGitHub ? (
                     <>
                         <div style={{ marginBottom: "1rem" }}>
@@ -226,24 +226,17 @@ function UploadGame() {
                     </div>
                 )}
 
+
                 <div style={{ marginBottom: "1rem" }}>
                     <label>
                         Thumbnail (640x480 recommended):
-                        <input
-                            type="file"
-                            accept="image/*"
-                            onChange={(e) => setThumbnail(e.target.files[0])}
-                        />
+                        <input type="file" accept="image/*" onChange={(e) => setThumbnail(e.target.files[0])} />
                     </label>
                 </div>
                 <div style={{ marginBottom: "1rem" }}>
                     <label>
                         Overwrite if exists:
-                        <input
-                            type="checkbox"
-                            checked={overwrite}
-                            onChange={(e) => setOverwrite(e.target.checked)}
-                        />
+                        <input type="checkbox" checked={overwrite} onChange={(e) => setOverwrite(e.target.checked)} />
                     </label>
                 </div>
                 <button
