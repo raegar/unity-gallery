@@ -14,7 +14,7 @@ function UploadGame() {
     const [gitHubUrl, setGitHubUrl] = useState("");
     const [assetName, setAssetName] = useState("");
 
-    // Auto-generate Project ID unless manually modified
+    // When the Title changes, update title state and auto-generate projectId if not manually changed.
     const handleTitleChange = (e) => {
         const newTitle = e.target.value;
         setTitle(newTitle);
@@ -24,6 +24,7 @@ function UploadGame() {
         }
     };
 
+    // Update projectId state when edited manually.
     const handleProjectIdChange = (e) => {
         setProjectId(e.target.value);
         setProjectIdManuallyChanged(true);
@@ -44,7 +45,8 @@ function UploadGame() {
         formData.append("author", author);
         formData.append("projectId", projectId);
         formData.append("overwrite", overwrite ? "true" : "false");
-        if (moduleCode) formData.append("moduleCode", moduleCode);
+        // Always send moduleCode (even if empty) so that the server always receives the field.
+        formData.append("moduleCode", moduleCode);
         if (thumbnail) formData.append("thumbnail", thumbnail);
 
         try {
@@ -64,7 +66,7 @@ function UploadGame() {
                 const repo = match[2];
 
                 let releaseData;
-                // Try to fetch the latest (stable) release.
+                // Attempt to fetch the latest (stable) release.
                 let releaseResponse = await fetch(
                     `https://api.github.com/repos/${owner}/${repo}/releases/latest`
                 );

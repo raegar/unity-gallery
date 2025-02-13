@@ -25,7 +25,6 @@ const decompressFile = (filePath, extension) => {
             .pipe(decompress)
             .pipe(writeStream)
             .on("finish", () => {
-                // Optionally remove the compressed file.
                 fs.unlinkSync(filePath);
                 resolve(newFilePath);
             })
@@ -66,9 +65,7 @@ function findBuildFolder(dir) {
         const fullPath = path.join(dir, item);
         if (fs.statSync(fullPath).isDirectory()) {
             const found = findBuildFolder(fullPath);
-            if (found) {
-                return found;
-            }
+            if (found) return found;
         }
     }
     return null;
@@ -87,14 +84,10 @@ const renameBuildFiles = (buildFolder, projectId, currentBaseName) => {
 };
 
 const app = express();
-
-// Configure multer for file uploads
 const upload = multer({ dest: "uploads/" });
 
-// Enable CORS
 app.use(cors());
 
-// Serve static files from public/builds with cache-control headers for thumbnails.
 app.use(
     "/builds",
     express.static(path.join(__dirname, "public", "builds"), {
@@ -113,32 +106,24 @@ app.use(express.urlencoded({ extended: true }));
 app.get("/proxy/github/:owner/:repo/:tag/:assetName?", async (req, res) => {
     const { owner, repo, tag, assetName } = req.params;
     let assetUrl = "";
-
     if (assetName && assetName.trim() !== "") {
         try {
-            // Fetch release data for the given tag
+            // Fetch release data for the specified tag.
             const releaseResponse = await axios.get(
                 `https://api.github.com/repos/${owner}/${repo}/releases/tags/${tag}`
             );
             const releaseData = releaseResponse.data;
-            // Find the asset matching the provided name
-            const asset = releaseData.assets.find(
-                (a) => a.name === assetName.trim()
-            );
+            // Find the asset that matches the provided asset name.
+            const asset = releaseData.assets.find((a) => a.name === assetName.trim());
             if (!asset) {
-                return res
-                    .status(404)
-                    .json({ error: "Asset not found in the release." });
+                return res.status(404).json({ error: "Asset not found in the release." });
             }
             assetUrl = asset.browser_download_url;
         } catch (error) {
             console.error("Error fetching release data:", error.message);
-            return res
-                .status(500)
-                .json({ error: "Error fetching release data from GitHub." });
+            return res.status(500).json({ error: "Error fetching release data from GitHub." });
         }
     } else {
-        // Fallback to default naming convention if no assetName is provided
         const fileName = `${repo}-${tag}.zip`;
         assetUrl = `https://github.com/${owner}/${repo}/releases/download/${tag}/${fileName}`;
     }
@@ -177,9 +162,7 @@ app.post(
             : null;
 
         if (!zipFile || !title || !author || !projectId) {
-            return res
-                .status(400)
-                .json({ error: "Missing required fields or files." });
+            return res.status(400).json({ error: "Missing required fields or files." });
         }
 
         const extractDir = path.join(__dirname, "public", "builds", projectId);
@@ -207,9 +190,7 @@ app.post(
                 fs.rmSync(extractDir, { recursive: true, force: true });
             } catch (err) {
                 console.error("Error deleting existing folder:", err);
-                return res
-                    .status(500)
-                    .json({ error: "Error deleting existing project folder." });
+                return res.status(500).json({ error: "Error deleting existing project folder." });
             }
         }
         if (gameIndex !== -1 && overwrite === "true") {
@@ -225,9 +206,7 @@ app.post(
                 fs.renameSync(thumbnailFile.path, thumbDest);
             } catch (err) {
                 console.error("Error moving thumbnail file:", err);
-                return res
-                    .status(500)
-                    .json({ error: "Error processing thumbnail." });
+                return res.status(500).json({ error: "Error processing thumbnail." });
             }
         }
 
@@ -235,7 +214,6 @@ app.post(
         fs.createReadStream(zipFile.path)
             .pipe(unzipper.Extract({ path: extractDir }))
             .on("close", () => {
-                // Find the Build folder and process as before…
                 let foundBuildFolder = findBuildFolder(extractDir);
                 if (!foundBuildFolder) {
                     return res.status(500).json({ error: "Build folder not found in the uploaded ZIP." });
@@ -257,7 +235,7 @@ app.post(
                 }
                 const currentBaseName = loaderFile.replace(".loader.js", "");
 
-                // Rename build files to match the provided projectId if necessary.
+                // Rename build files if necessary.
                 if (currentBaseName !== projectId) {
                     renameBuildFiles(targetBuildFolder, projectId, currentBaseName);
                 }
@@ -265,20 +243,19 @@ app.post(
                 // Decompress any compressed files in the Build folder.
                 decompressFilesInFolder(targetBuildFolder)
                     .then(() => {
-                        // Construct the new game object, adding uploadDate and moduleCode.
                         const newGame = {
                             id: projectId,
                             title,
                             author,
-                            moduleCode: moduleCode || "",  // new field; if not provided, default to empty string
-                            uploadDate: new Date().toISOString(),  // new field set at upload time
+                            moduleCode: moduleCode || "", // Will store an empty string if not provided
+                            uploadDate: new Date().toISOString(),
                             thumbnail: `/builds/${projectId}/thumbnail.png`,
                             build: {
                                 loaderUrl: `/builds/${projectId}/Build/${projectId}.loader.js`,
                                 dataUrl: `/builds/${projectId}/Build/${projectId}.data`,
                                 frameworkUrl: `/builds/${projectId}/Build/${projectId}.framework.js`,
-                                codeUrl: `/builds/${projectId}/Build/${projectId}.wasm`
-                            }
+                                codeUrl: `/builds/${projectId}/Build/${projectId}.wasm`,
+                            },
                         };
 
                         games.push(newGame);
@@ -287,7 +264,6 @@ app.post(
                             if (err) {
                                 return res.status(500).json({ error: "Error updating games.json" });
                             }
-                            // Remove the uploaded ZIP file after extraction.
                             fs.unlink(zipFile.path, () => { });
                             res.json({ success: true, game: newGame });
                         });
@@ -305,7 +281,6 @@ app.post(
 // Update game metadata endpoint.
 app.put("/games/:id", (req, res) => {
     const projectId = req.params.id;
-    // Include moduleCode and uploadDate in addition to title and author.
     const { title, author, moduleCode, uploadDate } = req.body;
     const gamesJsonPath = path.join(__dirname, "public", "games.json");
 
@@ -316,17 +291,14 @@ app.put("/games/:id", (req, res) => {
         return res.status(500).json({ error: "Error reading games.json" });
     }
 
-    const gameIndex = games.findIndex(game => game.id === projectId);
+    const gameIndex = games.findIndex((game) => game.id === projectId);
     if (gameIndex === -1) {
         return res.status(404).json({ error: "Game not found" });
     }
 
-    // Update the metadata with the new fields.
     if (title) games[gameIndex].title = title;
     if (author) games[gameIndex].author = author;
-    // Update moduleCode (if provided, even if an empty string is acceptable to clear it)
     if (moduleCode !== undefined) games[gameIndex].moduleCode = moduleCode;
-    // Update uploadDate (if provided)
     if (uploadDate) games[gameIndex].uploadDate = uploadDate;
 
     fs.writeFile(gamesJsonPath, JSON.stringify(games, null, 2), (err) => {
@@ -336,7 +308,6 @@ app.put("/games/:id", (req, res) => {
         res.json({ success: true, game: games[gameIndex] });
     });
 });
-
 
 // Update thumbnail endpoint.
 app.put("/games/:id/thumbnail", upload.single("thumbnail"), (req, res) => {
